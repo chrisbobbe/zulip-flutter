@@ -46,3 +46,38 @@ class GetMessagesResult {
 
   Map<String, dynamic> toJson() => _$GetMessagesResultToJson(this);
 }
+
+// https://zulip.com/api/send-message#parameter-topic
+const int kMaxTopicLength = 60;
+
+/// https://zulip.com/api/send-message
+// TODO currently only handles stream messages; fix
+Future<SendMessageResult> sendMessage(
+  ApiConnection connection, {
+  required String content,
+  required String topic,
+}) async {
+  final data = await connection.post('messages', {
+    'type': 'stream', // TODO parametrize
+    'to': 7, // TODO parametrize; this is `#test here`
+    'topic': topic,
+    'content': content,
+  });
+  return SendMessageResult.fromJson(jsonDecode(data));
+}
+
+@JsonSerializable()
+class SendMessageResult {
+  final int id;
+  final String? deliver_at;
+
+  SendMessageResult({
+    required this.id,
+    this.deliver_at,
+  });
+
+  factory SendMessageResult.fromJson(Map<String, dynamic> json) =>
+      _$SendMessageResultFromJson(json);
+
+  Map<String, dynamic> toJson() => _$SendMessageResultToJson(this);
+}

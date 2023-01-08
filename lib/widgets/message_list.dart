@@ -83,6 +83,12 @@ class _MessageListState extends State<MessageList> {
         // This works great when we want to start from the latest.
         // TODO handle scroll starting at first unread, or link anchor
         reverse: true,
+        // Dismiss compose-box keyboard when dragging up or down.
+        // TODO refine with custom implementation, e.g.:
+        //   - Only dismiss when scrolling up to older messages
+        //   - Show keyboard (focus compose box) on overscroll up to new
+        //     messages (OverscrollNotification)
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         itemBuilder: (context, i) => MessageItem(
             trailing: i == 0 ? null : const SizedBox(height: 11),
             message: model!.messages[length - 1 - i],
