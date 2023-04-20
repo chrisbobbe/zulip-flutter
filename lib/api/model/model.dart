@@ -102,11 +102,72 @@ class Subscription {
   Map<String, dynamic> toJson() => _$SubscriptionToJson(this);
 }
 
+/// A value parsed from JSON as either `null` or another value.
+///
+/// This can be used to represent JSON properties where absence, null, and some
+/// other type are distinguished. For example, with the following field definition:
+/// ```dart
+///   JsonNullable<String>? name;
+/// ```
+/// a `name` value of `null` (as a Dart value) represents the `name` property
+/// being absent in JSON; a value of `JsonNullable(null)` represents `'name': null`
+/// in JSON; and a value of `JsonNullable("foo")` represents `'name': 'foo'` in JSON.
+class JsonNullable<T> {
+  const JsonNullable(this.value);
+  final T? value;
+}
+
+JsonNullable<T>? readJsonNullable<T>(Map map, String key) {
+  return map.containsKey(key) ? JsonNullable(map[key]) : null;
+}
+
+abstract class AvatarUrl {
+  AvatarUrl();
+  // Uri get(User user, int sizePhysicalPx); // add this when we need it
+
+  factory AvatarUrl.fromMaybeJsonNullable(JsonNullable<String>? maybeJsonNullable) {
+    if (maybeJsonNullable == null) {
+      return FallbackAvatarUrl();
+    }
+    final JsonNullable(:value) = maybeJsonNullable;
+    return value == null
+      ? GravatarAvatarUrl(urlFromServer: value)
+      : UploadedAvatarUrl(urlFromServer: value);
+  }
+
+  String? toJson();
+}
+
+class FallbackAvatarUrl extends AvatarUrl {
+  FallbackAvatarUrl();
+
+  @override
+  String? toJson() => 'foo'; // TODO how??
+}
+
+class GravatarAvatarUrl extends AvatarUrl {
+  GravatarAvatarUrl({this.urlFromServer});
+  final String? urlFromServer;
+
+  @override
+  String? toJson() => 'foo'; // TODO how??
+}
+
+class UploadedAvatarUrl extends AvatarUrl {
+  UploadedAvatarUrl({required this.urlFromServer});
+  final String urlFromServer;
+
+  @override
+  String? toJson() => 'foo'; // TODO how??
+}
+
 /// As in the get-messages response.
 ///
 /// https://zulip.com/api/get-messages#response
 abstract class Message {
-  final String? avatarUrl;
+  @JsonKey(readValue: readJsonNullable<String>, fromJson: AvatarUrl.fromMaybeJsonNullable)
+  final AvatarUrl avatarUrl;
+
   final String client;
   final String content;
   final String contentType;
@@ -134,7 +195,7 @@ abstract class Message {
   final String? matchSubject;
 
   Message({
-    this.avatarUrl,
+    required this.avatarUrl,
     required this.client,
     required this.content,
     required this.contentType,
@@ -173,7 +234,7 @@ class StreamMessage extends Message {
   final int streamId;
 
   StreamMessage({
-    super.avatarUrl,
+    required super.avatarUrl,
     required super.client,
     required super.content,
     required super.contentType,
@@ -227,7 +288,7 @@ class PmMessage extends Message {
   final List<PmRecipient> displayRecipient;
 
   PmMessage({
-    super.avatarUrl,
+    required super.avatarUrl,
     required super.client,
     required super.content,
     required super.contentType,

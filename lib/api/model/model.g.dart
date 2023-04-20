@@ -82,7 +82,8 @@ Map<String, dynamic> _$SubscriptionToJson(Subscription instance) =>
 
 StreamMessage _$StreamMessageFromJson(Map<String, dynamic> json) =>
     StreamMessage(
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: AvatarUrl.fromMaybeJsonNullable(
+          readJsonNullable(json, 'avatar_url') as JsonNullable<String>?),
       client: json['client'] as String,
       content: json['content'] as String,
       contentType: json['content_type'] as String,
@@ -141,7 +142,8 @@ Map<String, dynamic> _$PmRecipientToJson(PmRecipient instance) =>
     };
 
 PmMessage _$PmMessageFromJson(Map<String, dynamic> json) => PmMessage(
-      avatarUrl: json['avatar_url'] as String?,
+      avatarUrl: AvatarUrl.fromMaybeJsonNullable(
+          readJsonNullable(json, 'avatar_url') as JsonNullable<String>?),
       client: json['client'] as String,
       content: json['content'] as String,
       contentType: json['content_type'] as String,
