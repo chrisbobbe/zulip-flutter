@@ -3,8 +3,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dialog.dart';
 
+import '../model/autocomplete.dart';
+import '../model/narrow.dart';
+import '../model/store.dart';
+import 'dialog.dart';
 import '../api/route/messages.dart';
 import 'store.dart';
 
@@ -167,9 +170,36 @@ class _StreamContentInput extends StatefulWidget {
 class _StreamContentInputState extends State<_StreamContentInput> {
   late String _topicTextNormalized;
 
+  MentionAutocompleteView? model;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final store = PerAccountStoreWidget.of(context);
+    if (model != null && model!.store == store) {
+      // We already have a model, and it's for the right store.
+      return;
+    }
+    // Otherwise, set up the model.  Dispose of any old model.
+    model?.dispose();
+    _initModel(store);
+  }
+
+  void _initModel(PerAccountStore store) {
+    model = MentionAutocompleteView.init(store: store, narrow: const AllMessagesNarrow());
+    model!.addListener(_modelChanged);
+  }
+
+  void _modelChanged() {
+    setState(() {
+      // The actual state lives in the [MessageListView] model.
+      // This method was called because that just changed.
+    });
+  }
+
   _topicChanged() {
     setState(() {
-      _topicTextNormalized = widget.topicController.textNormalized();
+      model?.query = MentionAutocompleteQuery(widget.topicController.textNormalized());
     });
   }
 
@@ -182,6 +212,7 @@ class _StreamContentInputState extends State<_StreamContentInput> {
 
   @override
   void dispose() {
+    print(model!.results.map((r) => (r as UserMentionAutocompleteResult).userId));
     widget.topicController.removeListener(_topicChanged);
     super.dispose();
   }
