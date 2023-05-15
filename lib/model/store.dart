@@ -12,6 +12,7 @@ import '../api/model/initial_snapshot.dart';
 import '../api/model/model.dart';
 import '../api/route/events.dart';
 import '../api/route/messages.dart';
+import 'autocomplete.dart';
 import 'database.dart';
 import 'message_list.dart';
 
@@ -177,6 +178,8 @@ class PerAccountStore extends ChangeNotifier {
     assert(removed);
   }
 
+  final AutocompleteViewManager autocompleteViewManager = AutocompleteViewManager();
+
   /// Called when the app is reassembled during debugging, e.g. for hot reload.
   ///
   /// This will redo from scratch any computations we can, such as parsing
@@ -185,6 +188,7 @@ class PerAccountStore extends ChangeNotifier {
     for (final view in _messageListViews) {
       view.reassemble();
     }
+    autocompleteViewManager.reassemble();
   }
 
   void handleEvent(Event event) {
@@ -196,10 +200,12 @@ class PerAccountStore extends ChangeNotifier {
     } else if (event is RealmUserAddEvent) {
       debugPrint("server event: realm_user/add");
       users[event.person.userId] = event.person;
+      autocompleteViewManager.handleRealmUserAddEvent(event);
       notifyListeners();
     } else if (event is RealmUserRemoveEvent) {
       debugPrint("server event: realm_user/remove");
       users.remove(event.userId);
+      autocompleteViewManager.handleRealmUserRemoveEvent(event);
       notifyListeners();
     } else if (event is RealmUserUpdateEvent) {
       debugPrint("server event: realm_user/update");
@@ -225,6 +231,7 @@ class PerAccountStore extends ChangeNotifier {
           profileData.remove(update.id);
         }
       }
+      autocompleteViewManager.handleRealmUserUpdateEvent(event);
       notifyListeners();
     } else if (event is MessageEvent) {
       debugPrint("server event: message ${jsonEncode(event.message.toJson())}");
