@@ -27,9 +27,12 @@ class ComposeAutocomplete extends StatefulWidget {
 }
 
 class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
+  late RawAutocompleteController<MentionAutocompleteResult> _autocompleteController;
   MentionAutocompleteView? _viewModel; // TODO different autocomplete view types
 
   void _composeContentChanged() {
+    _autocompleteController.selection = null;
+
     final newAutocompleteIntent = widget.controller.autocompleteIntent();
     if (newAutocompleteIntent != null) {
       final store = PerAccountStoreWidget.of(context);
@@ -40,7 +43,7 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
       if (_viewModel != null) {
         _viewModel!.dispose(); // removes our listener
         _viewModel = null;
-        _resultsToDisplay = [];
+        _autocompleteController.options = [];
       }
     }
   }
@@ -49,6 +52,7 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
   void initState() {
     super.initState();
     widget.controller.addListener(_composeContentChanged);
+    _autocompleteController = RawAutocompleteController<MentionAutocompleteResult>();
   }
 
   @override
@@ -67,15 +71,15 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
     super.dispose();
   }
 
-  List<MentionAutocompleteResult> _resultsToDisplay = [];
-
   void _viewModelChanged() {
-    setState(() {
-      _resultsToDisplay = _viewModel!.results.toList();
+    setState((){
+      _autocompleteController.options = _viewModel!.results.toList();
     });
   }
 
   void _onTapOption(MentionAutocompleteResult option) {
+    _autocompleteController.selection = option; // dismisses list of options
+
     // Probably the same intent that brought up the option that was tapped.
     // If not, it still shouldn't be off by more than the time it takes
     // to compute the autocomplete results, which we do asynchronously.
@@ -106,7 +110,8 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
   }
 
   Widget _buildItem(BuildContext _, int index) {
-    final option = _resultsToDisplay[index];
+    final options = _autocompleteController.options as List<MentionAutocompleteResult>;
+    final option = options[index];
     String label;
     switch (option) {
       case UserMentionAutocompleteResult(:var userId):
@@ -129,23 +134,10 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
   @override
   Widget build(BuildContext context) {
     return RawAutocomplete<MentionAutocompleteResult>(
-      textEditingController: widget.controller,
+      controller: _autocompleteController,
       focusNode: widget.focusNode,
-      optionsBuilder: (_) => _resultsToDisplay,
       optionsViewOpenDirection: OptionsViewOpenDirection.up,
-      // RawAutocomplete passes these when it calls optionsViewBuilder:
-      //   AutocompleteOnSelected<T> onSelected,
-      //   Iterable<T> options,
-      //
-      // We ignore them:
-      // - `onSelected` would cause some behavior we don't want,
-      //   such as moving the cursor to the end of the compose-input text.
-      // - `options` would be needed if we were delegating to RawAutocomplete
-      //   the work of creating the list of options. We're not; the
-      //   `optionsBuilder` we pass is just a function that returns
-      //   _resultsToDisplay, which is computed with lots of help from
-      //   MentionAutocompleteView.
-      optionsViewBuilder: (context, _, __) {
+      optionsViewBuilder: (context, controller) {
         return Align(
           alignment: Alignment.bottomLeft,
           child: Material(
@@ -155,20 +147,12 @@ class _ComposeAutocompleteState extends State<ComposeAutocomplete> {
               child: ListView.builder(
                 padding: EdgeInsets.zero,
                 shrinkWrap: true,
-                itemCount: _resultsToDisplay.length,
+                itemCount: controller.options.length,
                 itemBuilder: _buildItem))));
       },
-      // RawAutocomplete passes these when it calls fieldViewBuilder:
-      //   TextEditingController textEditingController,
-      //   FocusNode focusNode,
-      //   VoidCallback onFieldSubmitted,
-      //
-      // We ignore them. For the first two, we've opted out of having
-      // RawAutocomplete create them for us; we create and manage them ourselves.
-      // The third isn't helpful; it lets us opt into behavior we don't actually
-      // want (see discussion:
-      //   <https://chat.zulip.org/#narrow/stream/243-mobile-team/topic/autocomplete.20UI/near/1599994>)
-      fieldViewBuilder: (context, _, __, ___) => widget.fieldViewBuilder(context),
+      // RawAutocomplete passes a FocusNode when it calls fieldViewBuilder.
+      // We ignore it; we've opted out of having RawAutocomplete create it for us.
+      fieldViewBuilder: (context, _) => widget.fieldViewBuilder(context),
     );
   }
 }

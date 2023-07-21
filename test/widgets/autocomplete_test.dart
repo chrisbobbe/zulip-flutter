@@ -70,8 +70,6 @@ void main() {
       final store = await TestZulipBinding.instance.globalStore.perAccount(eg.selfAccount.id);
 
       // Options are filtered correctly for query
-      // TODO(#226): Remove this extra edit when this bug is fixed.
-      await tester.enterText(composeInputFinder, 'hello @user ');
       await tester.enterText(composeInputFinder, 'hello @user t');
       await tester.pumpAndSettle(); // async computation; options appear
       // "User Two" and "User Three" appear, but not "User One"
@@ -89,16 +87,13 @@ void main() {
       check(tester.widgetList(find.text('User Three'))).isEmpty();
 
       // Then a new autocomplete intent brings up options again
-      // TODO(#226): Remove this extra edit when this bug is fixed.
-      await tester.enterText(composeInputFinder, 'hello @user tw');
       await tester.enterText(composeInputFinder, 'hello @user two');
       await tester.pumpAndSettle(); // async computation; options appear
       tester.widget(find.text('User Two'));
 
       // Removing autocomplete intent causes options to disappear
-      // TODO(#226): Remove one of these edits when this bug is fixed.
       await tester.enterText(composeInputFinder, '');
-      await tester.enterText(composeInputFinder, ' ');
+      await tester.pump();
       check(tester.widgetList(find.text('User One'))).isEmpty();
       check(tester.widgetList(find.text('User Two'))).isEmpty();
       check(tester.widgetList(find.text('User Three'))).isEmpty();
