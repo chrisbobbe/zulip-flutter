@@ -573,13 +573,17 @@ class MessageItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final message = item.message;
+    final backgroundColor = switch (message) {
+      StreamMessage() => Colors.white,
+      DmMessage() => const HSLColor.fromAHSL(1, 45, 0.2, 0.96).toColor(),
+    };
     return StickyHeaderItem(
       allowOverflow: !item.isLastInBlock,
       header: header,
       child: _UnreadMarker(
         isRead: message.flags.contains(MessageFlag.read),
         child: ColoredBox(
-          color: Colors.white,
+          color: backgroundColor,
           child: Column(children: [
             MessageWithPossibleSender(item: item),
             if (trailingWhitespace != null && item.isLastInBlock) SizedBox(height: trailingWhitespace!),
