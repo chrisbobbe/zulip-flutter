@@ -272,22 +272,26 @@ class _SelectedUserChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final designVariables = DesignVariables.of(context);
     final store = PerAccountStoreWidget.of(context);
-
-    final fullName = store.userDisplayName(userId);
+    final clampedTextScaler = MediaQuery.textScalerOf(context)
+      .clamp(maxScaleFactor: 1.5);
 
     return DecoratedBox(
       decoration: BoxDecoration(
         color: designVariables.bgMenuButtonSelected,
         borderRadius: BorderRadius.circular(3)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Avatar(userId: userId, size: 22, borderRadius: 3),
-        Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(5, 3, 4, 3),
-          child: Text(fullName,
-            style: TextStyle(
-              fontSize: 16,
-              height: 16 / 16,
-              color: designVariables.labelMenuButton))),
+        Avatar(userId: userId, size: clampedTextScaler.scale(22), borderRadius: 3),
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(5, 3, 4, 3),
+            child: Text(store.userDisplayName(userId),
+              textScaler: clampedTextScaler,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 16,
+                height: 16 / 16,
+                color: designVariables.labelMenuButton)))),
       ]));
   }
 }
