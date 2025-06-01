@@ -114,7 +114,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _NewDmHeader(selectedUserIds: selectedUserIds),
       _NewDmSearchBar(
         searchController: searchController,
@@ -235,31 +235,26 @@ class _NewDmSearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final designVariables = DesignVariables.of(context);
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: 44,
-        maxHeight: 124),
-      child: DecoratedBox(
-        decoration: BoxDecoration(color: designVariables.bgSearchInput),
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 124),
+      decoration: BoxDecoration(color: designVariables.bgSearchInput),
+      child: SingleChildScrollView(
+        reverse: true,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          child: SingleChildScrollView(
-            reverse: true,
-            child: Row(children: [
-              Expanded(child: Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  for (final userId in selectedUserIds)
-                    _SelectedUserChip(userId: userId),
-                  // The IntrinsicWidth lets the text field participate in the Wrap
-                  // when its content fits on the same line with a user chip,
-                  // by preventing it from expanding to fill the available width.  See:
-                  //   https://github.com/zulip/zulip-flutter/pull/1322#discussion_r2094112488
-                  IntrinsicWidth(child: _buildSearchField(context)),
-                ])),
-            ])))));
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final userId in selectedUserIds)
+                _SelectedUserChip(userId: userId),
+              // The IntrinsicWidth lets the text field participate in the Wrap
+              // when its content fits on the same line with a user chip,
+              // by preventing it from expanding to fill the available width.  See:
+              //   https://github.com/zulip/zulip-flutter/pull/1322#discussion_r2094112488
+              IntrinsicWidth(child: _buildSearchField(context)),
+            ]))));
   }
 }
 
