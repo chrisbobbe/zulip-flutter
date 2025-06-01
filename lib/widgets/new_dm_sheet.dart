@@ -117,7 +117,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _NewDmHeader(selectedUserIds: selectedUserIds),
       _NewDmSearchBar(
-        searchController: searchController,
+        controller: searchController,
         selectedUserIds: selectedUserIds),
       Expanded(
         child: _NewDmUserList(
@@ -197,11 +197,11 @@ class _NewDmHeader extends StatelessWidget {
 
 class _NewDmSearchBar extends StatelessWidget {
   const _NewDmSearchBar({
-    required this.searchController,
+    required this.controller,
     required this.selectedUserIds,
   });
 
-  final TextEditingController searchController;
+  final TextEditingController controller;
   final Set<int> selectedUserIds;
 
   Widget _buildSearchField(BuildContext context) {
@@ -212,7 +212,7 @@ class _NewDmSearchBar extends StatelessWidget {
       : zulipLocalizations.newDmSheetSearchHintSomeSelected;
 
     return TextField(
-      controller: searchController,
+      controller: controller,
       autofocus: true,
       cursorColor: designVariables.foreground,
       style: TextStyle(
