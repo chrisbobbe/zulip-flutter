@@ -338,24 +338,23 @@ class _NewDmUserList extends StatelessWidget {
             splashFactory: NoSplash.splashFactory,
             onTap: () => onUserTapped(user.userId),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(0, 6, 12, 6),
+              padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 12, 6),
               child: Row(children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(
-                    Icons.circle_outlined,
-                    color: designVariables.radioBorder,
-                    size: 24)),
+                SizedBox(width: 8),
+                Icon(
+                  Icons.circle_outlined,
+                  color: designVariables.radioBorder,
+                  size: 24),
+                SizedBox(width: 10),
                 Avatar(userId: user.userId, size: 32, borderRadius: 3),
+                SizedBox(width: 8),
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(8, 6.5, 0, 6.5),
-                    child: Text(store.userDisplayName(user.userId),
-                      style: TextStyle(
-                        fontSize: 17,
-                        height: 19 / 17,
-                        color: designVariables.textMessage,
-                      ).merge(weightVariableTextStyle(context, wght: 500))))),
+                  child: Text(store.userDisplayName(user.userId),
+                    style: TextStyle(
+                      fontSize: 17,
+                      height: 19 / 17,
+                      color: designVariables.textMessage,
+                    ).merge(weightVariableTextStyle(context, wght: 500)))),
               ]))));
       });
   }
