@@ -7,14 +7,16 @@ import '../model/store.dart';
 import 'color.dart';
 import 'content.dart';
 import 'message_list.dart';
+import 'page.dart';
 import 'store.dart';
 import 'text.dart';
 import 'theme.dart';
 
 void showNewDmSheet(BuildContext context) {
+  final pageContext = PageRoot.contextOf(context);
   final store = PerAccountStoreWidget.of(context);
   showModalBottomSheet<void>(
-    context: context,
+    context: pageContext,
     clipBehavior: Clip.antiAlias,
     useSafeArea: true,
     isScrollControlled: true,
@@ -26,17 +28,12 @@ void showNewDmSheet(BuildContext context) {
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: PerAccountStoreWidget(
         accountId: store.accountId,
-        child: NewDmPicker(pageContext: context))));
+        child: NewDmPicker())));
 }
 
 @visibleForTesting
 class NewDmPicker extends StatefulWidget {
-  const NewDmPicker({
-    super.key,
-    required this.pageContext,
-  });
-
-  final BuildContext pageContext;
+  const NewDmPicker({super.key});
 
   @override
   State<NewDmPicker> createState() => _NewDmPickerState();
