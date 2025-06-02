@@ -148,7 +148,7 @@ class _NewDmHeader extends StatelessWidget {
     final designVariables = DesignVariables.of(context);
     final zulipLocalizations = ZulipLocalizations.of(context);
 
-    final nextButtonColor = selectedUserIds.isEmpty
+    final color = selectedUserIds.isEmpty
       ? designVariables.icon.withFadedAlpha(0.5)
       : designVariables.icon;
 
@@ -163,7 +163,7 @@ class _NewDmHeader extends StatelessWidget {
       },
       child: Text(zulipLocalizations.newDmSheetComposeButtonLabel,
         style: TextStyle(
-          color: nextButtonColor,
+          color: color,
           fontSize: 20,
           height: 30 / 20,
         ).merge(weightVariableTextStyle(context, wght: 600))));
