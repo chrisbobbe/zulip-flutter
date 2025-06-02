@@ -172,6 +172,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
     labelSearchPrompt: const Color(0xff000000).withValues(alpha: 0.5),
     mainBackground: const Color(0xfff0f0f0),
     radioBorder: Color(0xffbbbdc8),
+    radioFillSelected: Color(0xff4370f0),
     textInput: const Color(0xff000000),
     title: const Color(0xff1a1a1a),
     bgSearchInput: const Color(0xffe3e3e3),
@@ -240,6 +241,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
     labelSearchPrompt: const Color(0xffffffff).withValues(alpha: 0.5),
     mainBackground: const Color(0xff1d1d1d),
     radioBorder: Color(0xff626573),
+    radioFillSelected: Color(0xff4e7cfa),
     textInput: const Color(0xffffffff).withValues(alpha: 0.9),
     title: const Color(0xffffffff).withValues(alpha: 0.9),
     bgSearchInput: const Color(0xff313131),
@@ -316,6 +318,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
     required this.labelSearchPrompt,
     required this.mainBackground,
     required this.radioBorder,
+    required this.radioFillSelected,
     required this.textInput,
     required this.title,
     required this.bgSearchInput,
@@ -393,6 +396,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
   final Color labelSearchPrompt;
   final Color mainBackground;
   final Color radioBorder;
+  final Color radioFillSelected;
   final Color textInput;
   final Color title;
   final Color bgSearchInput;
@@ -465,6 +469,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
     Color? labelSearchPrompt,
     Color? mainBackground,
     Color? radioBorder,
+    Color? radioFillSelected,
     Color? textInput,
     Color? title,
     Color? bgSearchInput,
@@ -532,6 +537,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
       labelSearchPrompt: labelSearchPrompt ?? this.labelSearchPrompt,
       mainBackground: mainBackground ?? this.mainBackground,
       radioBorder: radioBorder ?? this.radioBorder,
+      radioFillSelected: radioFillSelected ?? this.radioFillSelected,
       textInput: textInput ?? this.textInput,
       title: title ?? this.title,
       bgSearchInput: bgSearchInput ?? this.bgSearchInput,
@@ -606,6 +612,7 @@ class DesignVariables extends ThemeExtension<DesignVariables> {
       labelSearchPrompt: Color.lerp(labelSearchPrompt, other.labelSearchPrompt, t)!,
       mainBackground: Color.lerp(mainBackground, other.mainBackground, t)!,
       radioBorder: Color.lerp(radioBorder, other.radioBorder, t)!,
+      radioFillSelected: Color.lerp(radioFillSelected, other.radioFillSelected, t)!,
       textInput: Color.lerp(textInput, other.textInput, t)!,
       title: Color.lerp(title, other.title, t)!,
       bgSearchInput: Color.lerp(bgSearchInput, other.bgSearchInput, t)!,

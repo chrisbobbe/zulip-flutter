@@ -341,10 +341,13 @@ class _NewDmUserList extends StatelessWidget {
               padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 12, 6),
               child: Row(children: [
                 SizedBox(width: 8),
-                Icon(
-                  Icons.circle_outlined,
-                  color: designVariables.radioBorder,
-                  size: 24),
+                isSelected
+                  ? Icon(size: 24,
+                      color: designVariables.radioFillSelected,
+                      Icons.check_circle_rounded)
+                  : Icon(size: 24,
+                      color: designVariables.radioBorder,
+                      Icons.circle_outlined),
                 SizedBox(width: 10),
                 Avatar(userId: user.userId, size: 32, borderRadius: 3),
                 SizedBox(width: 8),

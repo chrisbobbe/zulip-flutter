@@ -150,10 +150,11 @@ void main() {
 
     group('user selection', () {
       bool isUserSelected(WidgetTester tester, String userName) {
-        final material = tester.firstWidget<Material>(
-          find.widgetWithText(Material, userName));
+        final icon = tester.firstWidget<Icon>(find.descendant(
+          of: find.widgetWithText(Material, userName),
+          matching: find.byType(Icon)));
 
-        return material.color != Colors.transparent;
+        return icon.icon == Icons.check_circle_rounded;
       }
 
       testWidgets('selecting and deselecting a user', (tester) async {
