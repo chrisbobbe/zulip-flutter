@@ -41,6 +41,7 @@ class NewDmPicker extends StatefulWidget {
 
 class _NewDmPickerState extends State<NewDmPicker> {
   late TextEditingController searchController;
+  late ScrollController resultsScrollController;
   Set<int> selectedUserIds = {};
   List<User> filteredUsers = [];
   List <User> sortedUsers = [];
@@ -49,6 +50,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
   void initState() {
     super.initState();
     searchController = TextEditingController()..addListener(_handleSearchUpdate);
+    resultsScrollController = ScrollController();
   }
 
   @override
@@ -61,6 +63,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
   @override
   void dispose() {
     searchController.dispose();
+    resultsScrollController.dispose();
     super.dispose();
   }
 
@@ -93,6 +96,11 @@ class _NewDmPickerState extends State<NewDmPicker> {
     setState(() {
       filteredUsers = result;
     });
+
+    if (resultsScrollController.hasClients) {
+      // Jump to the first results for the new query.
+      resultsScrollController.jumpTo(0);
+    }
   }
 
   void _handleUserTap(int userId) {
@@ -119,6 +127,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
         child: _NewDmUserList(
           filteredUsers: filteredUsers,
           selectedUserIds: selectedUserIds,
+          scrollController: resultsScrollController,
           onUserTapped: (userId) => _handleUserTap(userId))),
     ]);
   }
@@ -291,11 +300,13 @@ class _NewDmUserList extends StatelessWidget {
   const _NewDmUserList({
     required this.filteredUsers,
     required this.selectedUserIds,
+    required this.scrollController,
     required this.onUserTapped,
   });
 
   final List<User> filteredUsers;
   final Set<int> selectedUserIds;
+  final ScrollController scrollController;
   final void Function(int userId) onUserTapped;
 
   @override
@@ -319,7 +330,7 @@ class _NewDmUserList extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: CustomScrollView(slivers: [
+      child: CustomScrollView(controller: scrollController, slivers: [
         SliverPadding(
           padding: EdgeInsets.only(top: 8),
           sliver: SliverSafeArea(
