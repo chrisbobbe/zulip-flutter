@@ -24,10 +24,9 @@ void showNewDmSheet(BuildContext context) {
       // list entries being covered by the keyboard. Add explicit
       // bottom padding the size of the keyboard, which fixes this.
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SafeArea(
-        child: PerAccountStoreWidget(
-          accountId: store.accountId,
-          child: NewDmPicker(pageContext: context)))));
+      child: PerAccountStoreWidget(
+        accountId: store.accountId,
+        child: NewDmPicker(pageContext: context))));
 }
 
 @visibleForTesting
@@ -320,45 +319,52 @@ class _NewDmUserList extends StatelessWidget {
               fontSize: 16))));
     }
 
-    return ListView.builder(
-      padding: EdgeInsets.all(8),
-      itemCount: filteredUsers.length,
-      itemBuilder: (context, index) {
-        final user = filteredUsers[index];
-        final isSelected = selectedUserIds.contains(user.userId);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: CustomScrollView(slivers: [
+        SliverPadding(
+          padding: EdgeInsets.only(top: 8),
+          sliver: SliverSafeArea(
+            minimum: EdgeInsets.only(bottom: 8),
+            sliver: SliverList.builder(
+              itemCount: filteredUsers.length,
+              itemBuilder: (context, index) {
+                final user = filteredUsers[index];
+                final isSelected = selectedUserIds.contains(user.userId);
 
-        return Material(
-          clipBehavior: Clip.antiAlias,
-          borderRadius: BorderRadius.circular(10),
-          color: isSelected
-            ? designVariables.bgMenuButtonSelected
-            : Colors.transparent,
-          child: InkWell(
-            highlightColor: designVariables.bgMenuButtonSelected,
-            splashFactory: NoSplash.splashFactory,
-            onTap: () => onUserTapped(user.userId),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 12, 6),
-              child: Row(children: [
-                SizedBox(width: 8),
-                isSelected
-                  ? Icon(size: 24,
-                      color: designVariables.radioFillSelected,
-                      Icons.check_circle_rounded)
-                  : Icon(size: 24,
-                      color: designVariables.radioBorder,
-                      Icons.circle_outlined),
-                SizedBox(width: 10),
-                Avatar(userId: user.userId, size: 32, borderRadius: 3),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Text(store.userDisplayName(user.userId),
-                    style: TextStyle(
-                      fontSize: 17,
-                      height: 19 / 17,
-                      color: designVariables.textMessage,
-                    ).merge(weightVariableTextStyle(context, wght: 500)))),
-              ]))));
-      });
+                return Material(
+                  clipBehavior: Clip.antiAlias,
+                  borderRadius: BorderRadius.circular(10),
+                  color: isSelected
+                    ? designVariables.bgMenuButtonSelected
+                    : Colors.transparent,
+                  child: InkWell(
+                    highlightColor: designVariables.bgMenuButtonSelected,
+                    splashFactory: NoSplash.splashFactory,
+                    onTap: () => onUserTapped(user.userId),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(0, 6, 12, 6),
+                      child: Row(children: [
+                        SizedBox(width: 8),
+                        isSelected
+                          ? Icon(size: 24,
+                              color: designVariables.radioFillSelected,
+                              Icons.check_circle_rounded)
+                          : Icon(size: 24,
+                              color: designVariables.radioBorder,
+                              Icons.circle_outlined),
+                        SizedBox(width: 10),
+                        Avatar(userId: user.userId, size: 32, borderRadius: 3),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(store.userDisplayName(user.userId),
+                            style: TextStyle(
+                              fontSize: 17,
+                              height: 19 / 17,
+                              color: designVariables.textMessage,
+                            ).merge(weightVariableTextStyle(context, wght: 500)))),
+                      ]))));
+              }))),
+        ]));
   }
 }
