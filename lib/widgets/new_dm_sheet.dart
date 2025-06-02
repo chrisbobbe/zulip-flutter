@@ -327,14 +327,16 @@ class _NewDmUserList extends StatelessWidget {
         final user = filteredUsers[index];
         final isSelected = selectedUserIds.contains(user.userId);
 
-        return InkWell(
-          splashFactory: NoSplash.splashFactory,
-          onTap: () => onUserTapped(user.userId),
-          child: DecoratedBox(
-            decoration: !isSelected
-              ? const BoxDecoration()
-              : BoxDecoration(color: designVariables.bgMenuButtonSelected,
-                  borderRadius: BorderRadius.circular(10)),
+        return Material(
+          clipBehavior: Clip.antiAlias,
+          borderRadius: BorderRadius.circular(10),
+          color: isSelected
+            ? designVariables.bgMenuButtonSelected
+            : Colors.transparent,
+          child: InkWell(
+            highlightColor: designVariables.bgMenuButtonSelected,
+            splashFactory: NoSplash.splashFactory,
+            onTap: () => onUserTapped(user.userId),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(0, 6, 12, 6),
               child: Row(children: [

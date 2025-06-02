@@ -150,17 +150,10 @@ void main() {
 
     group('user selection', () {
       bool isUserSelected(WidgetTester tester, String userName) {
-        final userTextFinder = find.text(userName);
-        final userItemFinder = find.ancestor(
-          of: userTextFinder,
-          matching: find.byType(InkWell));
+        final material = tester.firstWidget<Material>(
+          find.widgetWithText(Material, userName));
 
-        final decoratedBox = tester.widget<DecoratedBox>(find.descendant(
-          of: userItemFinder,
-          matching: find.byType(DecoratedBox)));
-
-        final decoration = decoratedBox.decoration as BoxDecoration?;
-        return decoration?.color != null;
+        return material.color != Colors.transparent;
       }
 
       testWidgets('selecting and deselecting a user', (tester) async {
