@@ -313,6 +313,7 @@ class _NewDmUserList extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
+            textAlign: TextAlign.center,
             zulipLocalizations.newDmSheetNoUsersFound,
             style: TextStyle(
               color: designVariables.labelMenuButton,
