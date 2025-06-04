@@ -196,7 +196,7 @@ class _NewDmButtonState extends State<_NewDmButton> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add, size: 24, color: fabLabelColor),
+            Icon(ZulipIcons.plus, size: 24, color: fabLabelColor),
             const SizedBox(width: 8),
             Text(
               zulipLocalizations.newDmFabButtonLabel,
