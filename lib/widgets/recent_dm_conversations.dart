@@ -172,12 +172,11 @@ class _NewDmButtonState extends State<_NewDmButton> {
       ? designVariables.fabLabelPressed
       : designVariables.fabLabel;
 
-    return InkWell(
+    return GestureDetector(
       onTap: () => showNewDmSheet(context),
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
-      borderRadius: BorderRadius.circular(28),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,

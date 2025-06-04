@@ -32,10 +32,7 @@ Future<void> setupSheet(WidgetTester tester, {
   await tester.tap(find.byIcon(ZulipIcons.user));
   await tester.pumpAndSettle();
 
-  final fab = find.ancestor(
-    of: find.text("New DM"),
-    matching: find.byType(InkWell));
-  await tester.tap(fab);
+  await tester.tap(find.widgetWithText(GestureDetector, 'New DM'));
   await tester.pumpAndSettle();
 }
 

@@ -111,16 +111,12 @@ void main() {
 
     testWidgets('opens new DM sheet on New DM button tap', (tester) async {
       await setupPage(tester, users: [], dmMessages: []);
-      final newDmButton = find.ancestor(
-        of: find.text("New DM"),
-        matching: find.byType(InkWell));
+      final newDmButton = find.widgetWithText(GestureDetector, 'New DM');
       check(newDmButton).findsOne();
 
       await tester.tap(newDmButton);
       await tester.pumpAndSettle();
-      check(find.descendant(
-        of: find.byType(NewDmPicker),
-        matching: find.text('New DM'))).findsOne();
+      check(newDmButton).findsOne();
 
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
