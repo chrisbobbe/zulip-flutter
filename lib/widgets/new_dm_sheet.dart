@@ -39,7 +39,7 @@ class NewDmPicker extends StatefulWidget {
   State<NewDmPicker> createState() => _NewDmPickerState();
 }
 
-class _NewDmPickerState extends State<NewDmPicker> {
+class _NewDmPickerState extends State<NewDmPicker> with PerAccountStoreAwareStateMixin<NewDmPicker> {
   late TextEditingController searchController;
   late ScrollController resultsScrollController;
   Set<int> selectedUserIds = {};
@@ -54,8 +54,7 @@ class _NewDmPickerState extends State<NewDmPicker> {
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void onNewStore() {
     final store = PerAccountStoreWidget.of(context);
     _initSortedUsers(store);
   }
