@@ -69,7 +69,7 @@ class _RecentDmConversationsPageBodyState extends State<RecentDmConversationsPag
                 unreadCount: unreadsModel!.countInDmNarrow(narrow));
             })),
         Positioned(
-          bottom: 16,
+          bottom: 21,
           child: _NewDmButton()),
       ]);
   }
