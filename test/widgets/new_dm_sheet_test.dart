@@ -159,10 +159,7 @@ void main() {
       final textField = tester.widget<TextField>(find.byType(TextField));
       check(textField.controller!.text).equals('Test');
 
-      final userTileFinder = find.ancestor(
-        of: find.text(user.fullName),
-        matching: find.byType(InkWell));
-      await tester.tap(userTileFinder);
+      await tester.tap(find.widgetWithText(InkWell, user.fullName));
       await tester.pump();
       check(textField.controller!.text).isEmpty();
     });
@@ -179,9 +176,7 @@ void main() {
 
     testWidgets('selecting and deselecting a user', (tester) async {
       final user = eg.user(fullName: 'Test User');
-      final userTileFinder = find.ancestor(
-        of: find.text(user.fullName),
-        matching: find.byType(InkWell));
+      final userTileFinder = find.widgetWithText(InkWell, user.fullName);
       await setupSheet(tester, users: [eg.selfUser, user]);
 
       var composeButton = tester.widget<GestureDetector>(
@@ -207,12 +202,8 @@ void main() {
 
     testWidgets('other user selection deselects self user', (tester) async {
       final otherUser = eg.user(fullName: 'Other User');
-      final otherUserTileFinder = find.ancestor(
-        of: find.text(otherUser.fullName),
-        matching: find.byType(InkWell));
-      final selfUserTileFinder = find.ancestor(
-        of: find.text(eg.selfUser.fullName),
-        matching: find.byType(InkWell));
+      final otherUserTileFinder = find.widgetWithText(InkWell, otherUser.fullName);
+      final selfUserTileFinder = find.widgetWithText(InkWell, eg.selfUser.fullName);
       await setupSheet(tester, users: [eg.selfUser, otherUser]);
 
       await tester.tap(selfUserTileFinder);
@@ -228,9 +219,7 @@ void main() {
 
     testWidgets('other user selection hides self user', (tester) async {
       final otherUser = eg.user(fullName: 'Other User');
-      final otherUserTileFinder = find.ancestor(
-        of: find.text(otherUser.fullName),
-        matching: find.byType(InkWell));
+      final otherUserTileFinder = find.widgetWithText(InkWell, otherUser.fullName);
       await setupSheet(tester, users: [eg.selfUser, otherUser]);
 
       check(find.text(eg.selfUser.fullName)).findsOne();
@@ -245,12 +234,8 @@ void main() {
       final user2 = eg.user(fullName: 'Test User 2');
       await setupSheet(tester, users: [user1, user2]);
 
-      final userTile1 = find.ancestor(
-        of: find.text(user1.fullName),
-        matching: find.byType(InkWell));
-      final userTile2 = find.ancestor(
-        of: find.text(user2.fullName),
-        matching: find.byType(InkWell));
+      final userTile1 = find.widgetWithText(InkWell, user1.fullName);
+      final userTile2 = find.widgetWithText(InkWell, user2.fullName);
 
       await tester.tap(userTile1);
       await tester.pump();
@@ -275,17 +260,13 @@ void main() {
       connection.prepare(
         json: eg.newestGetMessagesResult(foundOldest: true, messages: []).toJson());
       for (final user in users) {
-        final userTile = find.ancestor(
-          of: find.text(user.fullName),
-          matching: find.byType(InkWell));
+        final userTile = find.widgetWithText(InkWell, user.fullName);
         await tester.tap(userTile);
         await tester.pump();
       }
       await tester.tap(find.widgetWithText(GestureDetector, 'Compose'));
       await tester.pumpAndSettle();
-      check(find.descendant(
-        of: find.byType(ZulipAppBar),
-        matching: find.text(expectedAppBarTitle))).findsOne();
+      check(find.widgetWithText(ZulipAppBar, expectedAppBarTitle)).findsOne();
 
       check(find.byType(ComposeBox)).findsOne();
     }
