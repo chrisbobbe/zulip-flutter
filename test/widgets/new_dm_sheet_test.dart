@@ -12,6 +12,7 @@ import 'package:zulip/widgets/store.dart';
 
 import '../api/fake_api.dart';
 import '../example_data.dart' as eg;
+import '../flutter_checks.dart';
 import '../model/binding.dart';
 import '../model/test_store.dart';
 import '../test_navigation.dart';
@@ -62,11 +63,25 @@ void main() {
     check(composeButton.onTap).isNull();
   });
 
-  testWidgets('search field has autofocus when sheet opens', (tester) async {
+  testWidgets('search field has focus when sheet opens', (tester) async {
     await setupSheet(tester, users: []);
 
-    final textField = tester.widget<TextField>(find.byType(TextField));
-    check(textField.autofocus).isTrue();
+    void checkHasFocus() {
+      // Some element is focused…
+      final focusedElement = tester.binding.focusManager.primaryFocus?.context;
+      check(focusedElement).isNotNull();
+
+      // …it's a TextField. Specifically, the search input.
+      final focusedTextFieldWidget = focusedElement!
+        .findAncestorWidgetOfExactType<TextField>();
+      check(focusedTextFieldWidget).isNotNull()
+        .decoration.isNotNull()
+        .hintText.equals('Add one or more users');
+    }
+
+    checkHasFocus(); // It's focused initially.
+    await tester.pump(Duration(seconds: 1));
+    checkHasFocus(); // Something else doesn't come along and steal the focus.
   });
 
   group('user filtering', () {
