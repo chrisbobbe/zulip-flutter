@@ -14,17 +14,24 @@ import '../api/fake_api.dart';
 import '../example_data.dart' as eg;
 import '../model/binding.dart';
 import '../model/test_store.dart';
+import '../test_navigation.dart';
 import 'test_app.dart';
 
 Future<void> setupSheet(WidgetTester tester, {
   required List<User> users,
 }) async {
   addTearDown(testBinding.reset);
+
+  Route<dynamic>? lastPushedRoute;
+  final testNavObserver = TestNavigatorObserver()
+    ..onPushed = (route, _) => lastPushedRoute = route;
+
   await testBinding.globalStore.add(eg.selfAccount, eg.initialSnapshot());
   final store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
   await store.addUsers(users);
 
   await tester.pumpWidget(TestZulipApp(
+    navigatorObservers: [testNavObserver],
     accountId: eg.selfAccount.id,
     child: const HomePage()));
   await tester.pumpAndSettle();
@@ -33,7 +40,9 @@ Future<void> setupSheet(WidgetTester tester, {
   await tester.pumpAndSettle();
 
   await tester.tap(find.widgetWithText(GestureDetector, 'New DM'));
-  await tester.pumpAndSettle();
+  await tester.pump();
+  check(lastPushedRoute).isNotNull().isA<ModalBottomSheetRoute<void>>();
+  await tester.pump((lastPushedRoute as TransitionRoute).transitionDuration);
 }
 
 void main() {
