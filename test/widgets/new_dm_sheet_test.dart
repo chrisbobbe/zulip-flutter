@@ -59,6 +59,9 @@ void main() {
     }
   }
 
+  Finder findUserTile(User user) =>
+    find.widgetWithText(InkWell, user.fullName).first;
+
   testWidgets('shows header with correct buttons', (tester) async {
     await setupSheet(tester, users: []);
 
@@ -167,16 +170,16 @@ void main() {
       final textField = tester.widget<TextField>(find.byType(TextField));
       check(textField.controller!.text).equals('Test');
 
-      await tester.tap(find.widgetWithText(InkWell, user.fullName));
+      await tester.tap(findUserTile(user));
       await tester.pump();
       check(textField.controller!.text).isEmpty();
     });
   });
 
   group('user selection', () {
-    bool isUserSelected(WidgetTester tester, String userName) {
-      final icon = tester.firstWidget<Icon>(find.descendant(
-        of: find.widgetWithText(Material, userName),
+    bool isUserSelected(WidgetTester tester, User user) {
+      final icon = tester.widget<Icon>(find.descendant(
+        of: findUserTile(user),
         matching: find.byType(Icon)));
 
       return icon.icon == Icons.check_circle_rounded;
@@ -184,49 +187,45 @@ void main() {
 
     testWidgets('selecting and deselecting a user', (tester) async {
       final user = eg.user(fullName: 'Test User');
-      final userTileFinder = find.widgetWithText(InkWell, user.fullName);
       await setupSheet(tester, users: [eg.selfUser, user]);
 
-      check(isUserSelected(tester, user.fullName)).isFalse();
-      check(isUserSelected(tester, eg.selfUser.fullName)).isFalse();
+      check(isUserSelected(tester, user)).isFalse();
+      check(isUserSelected(tester, eg.selfUser)).isFalse();
       checkComposeButtonEnabled(tester, false);
 
-      await tester.tap(userTileFinder);
+      await tester.tap(findUserTile(user));
       await tester.pump();
-      check(isUserSelected(tester, user.fullName)).isTrue();
+      check(isUserSelected(tester, user)).isTrue();
       checkComposeButtonEnabled(tester, true);
 
-      await tester.tap(userTileFinder);
+      await tester.tap(findUserTile(user));
       await tester.pump();
-      check(isUserSelected(tester, user.fullName)).isFalse();
+      check(isUserSelected(tester, user)).isFalse();
       checkComposeButtonEnabled(tester, false);
     });
 
     testWidgets('other user selection deselects self user', (tester) async {
       final otherUser = eg.user(fullName: 'Other User');
-      final otherUserTileFinder = find.widgetWithText(InkWell, otherUser.fullName);
-      final selfUserTileFinder = find.widgetWithText(InkWell, eg.selfUser.fullName);
       await setupSheet(tester, users: [eg.selfUser, otherUser]);
 
-      await tester.tap(selfUserTileFinder);
+      await tester.tap(findUserTile(eg.selfUser));
       await tester.pump();
-      check(isUserSelected(tester, eg.selfUser.fullName)).isTrue();
+      check(isUserSelected(tester, eg.selfUser)).isTrue();
       check(find.text(eg.selfUser.fullName)).findsExactly(2);
 
-      await tester.tap(otherUserTileFinder);
+      await tester.tap(findUserTile(otherUser));
       await tester.pump();
-      check(isUserSelected(tester, otherUser.fullName)).isTrue();
+      check(isUserSelected(tester, otherUser)).isTrue();
       check(find.text(eg.selfUser.fullName)).findsNothing();
     });
 
     testWidgets('other user selection hides self user', (tester) async {
       final otherUser = eg.user(fullName: 'Other User');
-      final otherUserTileFinder = find.widgetWithText(InkWell, otherUser.fullName);
       await setupSheet(tester, users: [eg.selfUser, otherUser]);
 
       check(find.text(eg.selfUser.fullName)).findsOne();
 
-      await tester.tap(otherUserTileFinder);
+      await tester.tap(findUserTile(otherUser));
       await tester.pump();
       check(find.text(eg.selfUser.fullName)).findsNothing();
     });
@@ -236,15 +235,12 @@ void main() {
       final user2 = eg.user(fullName: 'Test User 2');
       await setupSheet(tester, users: [user1, user2]);
 
-      final userTile1 = find.widgetWithText(InkWell, user1.fullName);
-      final userTile2 = find.widgetWithText(InkWell, user2.fullName);
-
-      await tester.tap(userTile1);
+      await tester.tap(findUserTile(user1));
       await tester.pump();
-      await tester.tap(userTile2);
+      await tester.tap(findUserTile(user2));
       await tester.pump();
-      check(isUserSelected(tester, user1.fullName)).isTrue();
-      check(isUserSelected(tester, user2.fullName)).isTrue();
+      check(isUserSelected(tester, user1)).isTrue();
+      check(isUserSelected(tester, user2)).isTrue();
     });
   });
 
@@ -262,8 +258,7 @@ void main() {
       connection.prepare(
         json: eg.newestGetMessagesResult(foundOldest: true, messages: []).toJson());
       for (final user in users) {
-        final userTile = find.widgetWithText(InkWell, user.fullName);
-        await tester.tap(userTile);
+        await tester.tap(findUserTile(user));
         await tester.pump();
       }
       await tester.tap(findComposeButton);
