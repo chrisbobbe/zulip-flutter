@@ -118,6 +118,9 @@ void main() {
       check(find.text('Bob Brown')).findsNothing();
     });
 
+    // TODO test sorting by recent-DMs
+    // TODO test that scroll position resets on query change
+
     testWidgets('search is case-insensitive', (tester) async {
       await setupSheet(tester, users: testUsers);
       await tester.enterText(find.byType(TextField), 'alice');
