@@ -110,16 +110,28 @@ void main() {
     });
 
     testWidgets('opens new DM sheet on New DM button tap', (tester) async {
-      await setupPage(tester, users: [], dmMessages: []);
-      final newDmButton = find.widgetWithText(GestureDetector, 'New DM');
-      check(newDmButton).findsOne();
+      Route<dynamic>? lastPushedRoute;
+      Route<dynamic>? lastPoppedRoute;
+      final testNavObserver = TestNavigatorObserver()
+        ..onPushed = ((route, _) => lastPushedRoute = route)
+        ..onPopped = ((route, _) => lastPoppedRoute = route);
 
-      await tester.tap(newDmButton);
-      await tester.pumpAndSettle();
-      check(newDmButton).findsOne();
+      await setupPage(tester, navigatorObserver: testNavObserver,
+        users: [], dmMessages: []);
+
+      await tester.tap(find.widgetWithText(GestureDetector, 'New DM'));
+      await tester.pump();
+      check(lastPushedRoute).isA<ModalBottomSheetRoute<void>>();
+      await tester.pump((lastPushedRoute as TransitionRoute).transitionDuration);
+      check(find.byType(NewDmPicker)).findsOne();
 
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      check(lastPoppedRoute).isA<ModalBottomSheetRoute<void>>();
+      await tester.pump(
+        (lastPoppedRoute as TransitionRoute).reverseTransitionDuration
+        // TODO not sure why a 1ms fudge is needed; investigate.
+        + Duration(milliseconds: 1));
       check(find.byType(NewDmPicker)).findsNothing();
     });
   });
