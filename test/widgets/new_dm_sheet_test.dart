@@ -49,6 +49,16 @@ Future<void> setupSheet(WidgetTester tester, {
 void main() {
   TestZulipBinding.ensureInitialized();
 
+  final findComposeButton = find.widgetWithText(GestureDetector, 'Compose');
+  void checkComposeButtonEnabled(WidgetTester tester, bool expected) {
+    final button = tester.widget<GestureDetector>(findComposeButton);
+    if (expected) {
+      check(button.onTap).isNotNull();
+    } else {
+      check(button.onTap).isNull();
+    }
+  }
+
   testWidgets('shows header with correct buttons', (tester) async {
     await setupSheet(tester, users: []);
 
@@ -56,11 +66,9 @@ void main() {
       of: find.byType(NewDmPicker),
       matching: find.text('New DM'))).findsOne();
     check(find.text('Cancel')).findsOne();
-    check(find.text('Compose')).findsOne();
+    check(findComposeButton).findsOne();
 
-    final composeButton = tester.widget<GestureDetector>(
-      find.widgetWithText(GestureDetector, 'Compose'));
-    check(composeButton.onTap).isNull();
+    checkComposeButtonEnabled(tester, false);
   });
 
   testWidgets('search field has focus when sheet opens', (tester) async {
@@ -179,25 +187,19 @@ void main() {
       final userTileFinder = find.widgetWithText(InkWell, user.fullName);
       await setupSheet(tester, users: [eg.selfUser, user]);
 
-      var composeButton = tester.widget<GestureDetector>(
-        find.widgetWithText(GestureDetector, 'Compose'));
       check(isUserSelected(tester, user.fullName)).isFalse();
       check(isUserSelected(tester, eg.selfUser.fullName)).isFalse();
-      check(composeButton.onTap).isNull();
+      checkComposeButtonEnabled(tester, false);
 
       await tester.tap(userTileFinder);
       await tester.pump();
       check(isUserSelected(tester, user.fullName)).isTrue();
-      composeButton = tester.widget<GestureDetector>(
-        find.widgetWithText(GestureDetector, 'Compose'));
-      check(composeButton.onTap).isNotNull();
+      checkComposeButtonEnabled(tester, true);
 
       await tester.tap(userTileFinder);
       await tester.pump();
       check(isUserSelected(tester, user.fullName)).isFalse();
-      composeButton = tester.widget<GestureDetector>(
-        find.widgetWithText(GestureDetector, 'Compose'));
-      check(composeButton.onTap).isNull();
+      checkComposeButtonEnabled(tester, false);
     });
 
     testWidgets('other user selection deselects self user', (tester) async {
@@ -264,7 +266,7 @@ void main() {
         await tester.tap(userTile);
         await tester.pump();
       }
-      await tester.tap(find.widgetWithText(GestureDetector, 'Compose'));
+      await tester.tap(findComposeButton);
       await tester.pumpAndSettle();
       check(find.widgetWithText(ZulipAppBar, expectedAppBarTitle)).findsOne();
 
