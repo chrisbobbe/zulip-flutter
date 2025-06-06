@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zulip/api/model/model.dart';
 import 'package:zulip/widgets/app_bar.dart';
 import 'package:zulip/widgets/compose_box.dart';
+import 'package:zulip/widgets/content.dart';
 import 'package:zulip/widgets/home.dart';
 import 'package:zulip/widgets/icons.dart';
 import 'package:zulip/widgets/new_dm_sheet.dart';
@@ -61,6 +62,12 @@ void main() {
 
   Finder findUserTile(User user) =>
     find.widgetWithText(InkWell, user.fullName).first;
+
+  Finder findUserChip(User user) =>
+    find.byWidgetPredicate((widget) =>
+      widget is Avatar
+      && widget.userId == user.userId
+      && widget.size == 22);
 
   testWidgets('shows header with correct buttons', (tester) async {
     await setupSheet(tester, users: []);
@@ -180,30 +187,36 @@ void main() {
   });
 
   group('user selection', () {
-    bool isUserSelected(WidgetTester tester, User user) {
+    void checkUserSelected(WidgetTester tester, User user, bool expected) {
       final icon = tester.widget<Icon>(find.descendant(
         of: findUserTile(user),
         matching: find.byType(Icon)));
 
-      return icon.icon == Icons.check_circle_rounded;
+      if (expected) {
+        check(findUserChip(user)).findsOne();
+        check(icon).icon.equals(Icons.check_circle_rounded);
+      } else {
+        check(findUserChip(user)).findsNothing();
+        check(icon).icon.equals(Icons.circle_outlined);
+      }
     }
 
     testWidgets('selecting and deselecting a user', (tester) async {
       final user = eg.user(fullName: 'Test User');
       await setupSheet(tester, users: [eg.selfUser, user]);
 
-      check(isUserSelected(tester, user)).isFalse();
-      check(isUserSelected(tester, eg.selfUser)).isFalse();
+      checkUserSelected(tester, user, false);
+      checkUserSelected(tester, eg.selfUser, false);
       checkComposeButtonEnabled(tester, false);
 
       await tester.tap(findUserTile(user));
       await tester.pump();
-      check(isUserSelected(tester, user)).isTrue();
+      checkUserSelected(tester, user, true);
       checkComposeButtonEnabled(tester, true);
 
       await tester.tap(findUserTile(user));
       await tester.pump();
-      check(isUserSelected(tester, user)).isFalse();
+      checkUserSelected(tester, user, false);
       checkComposeButtonEnabled(tester, false);
     });
 
@@ -213,12 +226,12 @@ void main() {
 
       await tester.tap(findUserTile(eg.selfUser));
       await tester.pump();
-      check(isUserSelected(tester, eg.selfUser)).isTrue();
+      checkUserSelected(tester, eg.selfUser, true);
       check(find.text(eg.selfUser.fullName)).findsExactly(2);
 
       await tester.tap(findUserTile(otherUser));
       await tester.pump();
-      check(isUserSelected(tester, otherUser)).isTrue();
+      checkUserSelected(tester, otherUser, true);
       check(find.text(eg.selfUser.fullName)).findsNothing();
     });
 
@@ -242,8 +255,8 @@ void main() {
       await tester.pump();
       await tester.tap(findUserTile(user2));
       await tester.pump();
-      check(isUserSelected(tester, user1)).isTrue();
-      check(isUserSelected(tester, user2)).isTrue();
+      checkUserSelected(tester, user1, true);
+      checkUserSelected(tester, user2, true);
     });
   });
 
