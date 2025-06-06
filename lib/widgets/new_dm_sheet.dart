@@ -102,17 +102,28 @@ class _NewDmPickerState extends State<NewDmPicker> with PerAccountStoreAwareStat
     }
   }
 
-  void _handleUserTap(int userId) {
+  void _selectUser(int userId) {
+    assert(!selectedUserIds.contains(userId));
     final store = PerAccountStoreWidget.of(context);
-    selectedUserIds.contains(userId)
-      ? selectedUserIds.remove(userId)
-      : selectedUserIds.add(userId);
+    selectedUserIds.add(userId);
     if (userId != store.selfUserId) {
       selectedUserIds.remove(store.selfUserId);
     }
-
-    searchController.clear();
     _updateFilteredUsers(store);
+  }
+
+  void _unselectUser(int userId) {
+    assert(selectedUserIds.contains(userId));
+    final store = PerAccountStoreWidget.of(context);
+    selectedUserIds.remove(userId);
+    _updateFilteredUsers(store);
+  }
+
+  void _handleUserTap(int userId) {
+    selectedUserIds.contains(userId)
+      ? _unselectUser(userId)
+      : _selectUser(userId);
+    searchController.clear();
   }
 
   @override
@@ -207,6 +218,8 @@ class _NewDmSearchBar extends StatelessWidget {
 
   final TextEditingController controller;
   final Set<int> selectedUserIds;
+
+  // void _removeUser
 
   Widget _buildSearchField(BuildContext context) {
     final designVariables = DesignVariables.of(context);
