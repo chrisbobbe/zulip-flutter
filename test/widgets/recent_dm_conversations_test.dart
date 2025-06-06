@@ -70,6 +70,12 @@ void main() {
       (widget) => widget is RecentDmConversationsItem && widget.narrow == narrow,
     );
 
+    testWidgets('appearance when empty', (tester) async {
+      await setupPage(tester, users: [], dmMessages: []);
+      check(find.text('You have no direct messages yet! Why not start the conversation?'))
+        .findsOne();
+    });
+
     testWidgets('page builds; conversations appear in order', (tester) async {
       final user1 = eg.user(userId: 1);
       final user2 = eg.user(userId: 2);

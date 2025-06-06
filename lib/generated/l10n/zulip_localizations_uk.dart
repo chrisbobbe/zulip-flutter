@@ -649,10 +649,18 @@ class ZulipLocalizationsUk extends ZulipLocalizations {
   String get inboxPageTitle => 'Вхідні';
 
   @override
+  String get inboxEmptyPlaceholder =>
+      'There are no unread messages in your inbox.';
+
+  @override
   String get recentDmConversationsPageTitle => 'Особисті повідомлення';
 
   @override
   String get recentDmConversationsSectionHeader => 'Особисті повідомлення';
+
+  @override
+  String get recentDmConversationsEmptyPlaceholder =>
+      'You have no direct messages yet! Why not start the conversation?';
 
   @override
   String get combinedFeedPageTitle => 'Об\'єднана стрічка';
@@ -665,6 +673,10 @@ class ZulipLocalizationsUk extends ZulipLocalizations {
 
   @override
   String get channelsPageTitle => 'Канали';
+
+  @override
+  String get channelsEmptyPlaceholder =>
+      'You are not subscribed to any channels yet.';
 
   @override
   String get mainMenuMyProfile => 'Мій профіль';
@@ -691,9 +703,6 @@ class ZulipLocalizationsUk extends ZulipLocalizations {
 
   @override
   String get unpinnedSubscriptionsLabel => 'Відкріплені';
-
-  @override
-  String get subscriptionListNoChannels => 'Канали не знайдено';
 
   @override
   String get notifSelfUser => 'Ви';

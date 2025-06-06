@@ -5,6 +5,7 @@ import '../model/narrow.dart';
 import '../model/recent_dm_conversations.dart';
 import '../model/unreads.dart';
 import 'content.dart';
+import 'home.dart';
 import 'icons.dart';
 import 'message_list.dart';
 import 'new_dm_sheet.dart';
@@ -51,23 +52,28 @@ class _RecentDmConversationsPageBodyState extends State<RecentDmConversationsPag
 
   @override
   Widget build(BuildContext context) {
+    final zulipLocalizations = ZulipLocalizations.of(context);
     final sorted = model!.sorted;
     return Stack(
       alignment: Alignment.bottomCenter,
       clipBehavior: Clip.none,
-      children:[
-        SafeArea(
-          // Don't pad the bottom here; we want the list content to do that.
-          bottom: false,
-          child: ListView.builder(
-            padding: EdgeInsets.only(bottom: 90),
-            itemCount: sorted.length,
-            itemBuilder: (context, index) {
-              final narrow = sorted[index];
-              return RecentDmConversationsItem(
-                narrow: narrow,
-                unreadCount: unreadsModel!.countInDmNarrow(narrow));
-            })),
+      children: [
+        if (sorted.isEmpty)
+          PageBodyEmptyContentPlaceholder(
+            message: zulipLocalizations.recentDmConversationsEmptyPlaceholder)
+        else
+          SafeArea(
+            // Don't pad the bottom here; we want the list content to do that.
+            bottom: false,
+            child: ListView.builder(
+              padding: EdgeInsets.only(bottom: 90),
+              itemCount: sorted.length,
+              itemBuilder: (context, index) {
+                final narrow = sorted[index];
+                return RecentDmConversationsItem(
+                  narrow: narrow,
+                  unreadCount: unreadsModel!.countInDmNarrow(narrow));
+              })),
         Positioned(
           bottom: 21,
           child: _NewDmButton()),

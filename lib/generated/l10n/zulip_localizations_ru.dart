@@ -650,10 +650,18 @@ class ZulipLocalizationsRu extends ZulipLocalizations {
   String get inboxPageTitle => 'Входящие';
 
   @override
+  String get inboxEmptyPlaceholder =>
+      'There are no unread messages in your inbox.';
+
+  @override
   String get recentDmConversationsPageTitle => 'Личные сообщения';
 
   @override
   String get recentDmConversationsSectionHeader => 'Личные сообщения';
+
+  @override
+  String get recentDmConversationsEmptyPlaceholder =>
+      'You have no direct messages yet! Why not start the conversation?';
 
   @override
   String get combinedFeedPageTitle => 'Объединенная лента';
@@ -666,6 +674,10 @@ class ZulipLocalizationsRu extends ZulipLocalizations {
 
   @override
   String get channelsPageTitle => 'Каналы';
+
+  @override
+  String get channelsEmptyPlaceholder =>
+      'You are not subscribed to any channels yet.';
 
   @override
   String get mainMenuMyProfile => 'Мой профиль';
@@ -692,9 +704,6 @@ class ZulipLocalizationsRu extends ZulipLocalizations {
 
   @override
   String get unpinnedSubscriptionsLabel => 'Откреплены';
-
-  @override
-  String get subscriptionListNoChannels => 'Каналы не найдены';
 
   @override
   String get notifSelfUser => 'Вы';
