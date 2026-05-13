@@ -1385,6 +1385,7 @@ UserSettings userSettings({
   bool? displayEmojiReactionUsers,
   Emojiset? emojiset,
   bool? presenceEnabled,
+  bool? webInboxShowChannelFolders,
 }) {
   return UserSettings(
     twentyFourHourTime: twentyFourHourTime ?? TwentyFourHourTimeMode.twelveHour,
@@ -1392,6 +1393,7 @@ UserSettings userSettings({
     displayEmojiReactionUsers: displayEmojiReactionUsers ?? true,
     emojiset: emojiset ?? Emojiset.google,
     presenceEnabled: presenceEnabled ?? true,
+    webInboxShowChannelFolders: webInboxShowChannelFolders ?? true,
   );
 }
 const _userSettings = userSettings;

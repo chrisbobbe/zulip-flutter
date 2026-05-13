@@ -165,7 +165,11 @@ class _InboxPageState extends State<InboxPageBody> with PerAccountStoreAwareStat
         return bLastUnreadId.compareTo(aLastUnreadId);
       });
 
-      final uiChannelFolder = store.uiChannelFolder(streamId);
+      var uiChannelFolder = store.uiChannelFolder(streamId);
+      if (!store.userSettings.webInboxShowChannelFolders
+          && uiChannelFolder is UiChannelFolderRealmFolder) {
+        uiChannelFolder = UiChannelFolderPseudoOther();
+      }
       (channelSectionsByFolder[uiChannelFolder] ??= [])
         .add(_InboxListItemChannelSection(
           streamId: streamId,

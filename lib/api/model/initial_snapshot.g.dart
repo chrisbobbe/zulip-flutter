@@ -316,6 +316,8 @@ UserSettings _$UserSettingsFromJson(Map<String, dynamic> json) => UserSettings(
     unknownValue: Emojiset.unknown,
   ),
   presenceEnabled: json['presence_enabled'] as bool,
+  webInboxShowChannelFolders:
+      json['web_inbox_show_channel_folders'] as bool? ?? false,
 );
 
 const _$UserSettingsFieldMap = <String, String>{
@@ -324,6 +326,7 @@ const _$UserSettingsFieldMap = <String, String>{
   'displayEmojiReactionUsers': 'display_emoji_reaction_users',
   'emojiset': 'emojiset',
   'presenceEnabled': 'presence_enabled',
+  'webInboxShowChannelFolders': 'web_inbox_show_channel_folders',
 };
 
 Map<String, dynamic> _$UserSettingsToJson(UserSettings instance) =>
@@ -335,6 +338,7 @@ Map<String, dynamic> _$UserSettingsToJson(UserSettings instance) =>
       'display_emoji_reaction_users': instance.displayEmojiReactionUsers,
       'emojiset': instance.emojiset,
       'presence_enabled': instance.presenceEnabled,
+      'web_inbox_show_channel_folders': instance.webInboxShowChannelFolders,
     };
 
 const _$EmojisetEnumMap = {

@@ -919,6 +919,8 @@ class PerAccountStore extends PerAccountStoreBase with
             userSettings.emojiset                  = event.value as Emojiset;
           case UserSettingName.presenceEnabled:
             userSettings.presenceEnabled           = event.value as bool;
+          case UserSettingName.webInboxShowChannelFolders:
+            userSettings.webInboxShowChannelFolders = event.value as bool;
         }
         notifyListeners();
 

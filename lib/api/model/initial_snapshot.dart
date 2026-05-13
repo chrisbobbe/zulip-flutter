@@ -364,6 +364,11 @@ class UserSettings {
   @JsonKey(unknownEnumValue: Emojiset.unknown)
   Emojiset emojiset;
   bool presenceEnabled;
+  // Absent on servers too old to support channel folders;
+  // default to false because the feature doesn't exist there.
+  // TODO(server-11)
+  @JsonKey(defaultValue: false)
+  bool webInboxShowChannelFolders;
 
   // TODO more, as needed. When adding a setting here, please also:
   // (1) add it to the [UserSettingName] enum
@@ -377,6 +382,7 @@ class UserSettings {
     required this.displayEmojiReactionUsers,
     required this.emojiset,
     required this.presenceEnabled,
+    required this.webInboxShowChannelFolders,
   });
 
   factory UserSettings.fromJson(Map<String, dynamic> json) =>

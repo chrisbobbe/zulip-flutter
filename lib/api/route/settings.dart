@@ -22,6 +22,7 @@ Future<void> updateSettings(ApiConnection connection, {
       case UserSettingName.emojiset:
         value = RawParameter((valueRaw as Emojiset).toJson());
       case UserSettingName.presenceEnabled:
+      case UserSettingName.webInboxShowChannelFolders:
         value = valueRaw as bool;
     }
     params[name.toJson()] = value;

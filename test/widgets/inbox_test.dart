@@ -396,6 +396,54 @@ void main() {
         checkNoFolderHeader('Engineering');
       });
 
+      testWidgets('webInboxShowChannelFolders=false: realm folder header collapses into Other', (tester) async {
+        final folder = eg.channelFolder(name: 'Engineering');
+        final pinned = eg.stream();
+        final inFolder = eg.stream(folderId: folder.id);
+        final other = eg.stream();
+        await setupPage(tester,
+          streams: [pinned, inFolder, other],
+          subscriptions: [
+            eg.subscription(pinned, pinToTop: true),
+            eg.subscription(inFolder),
+            eg.subscription(other),
+          ],
+          channelFolders: [folder],
+          unreadMessages: [
+            eg.streamMessage(stream: pinned),
+            eg.streamMessage(stream: inFolder),
+            eg.streamMessage(stream: other),
+          ]);
+        checkFolderHeader('Engineering');
+
+        await store.handleEvent(UserSettingsUpdateEvent(id: 1,
+          property: UserSettingName.webInboxShowChannelFolders, value: false));
+        await tester.pump();
+
+        checkFolderHeader('Pinned channels');
+        checkNoFolderHeader('Engineering');
+        checkFolderHeader('Other channels');
+      });
+
+      testWidgets('webInboxShowChannelFolders=false: only-in-folder channels still show Other header', (tester) async {
+        final folder = eg.channelFolder(name: 'Engineering');
+        final inFolder = eg.stream(folderId: folder.id);
+        await setupPage(tester,
+          streams: [inFolder],
+          subscriptions: [eg.subscription(inFolder)],
+          channelFolders: [folder],
+          unreadMessages: [eg.streamMessage(stream: inFolder)]);
+        checkFolderHeader('Engineering');
+        checkNoFolderHeader('Other channels');
+
+        await store.handleEvent(UserSettingsUpdateEvent(id: 1,
+          property: UserSettingName.webInboxShowChannelFolders, value: false));
+        await tester.pump();
+
+        checkNoFolderHeader('Engineering');
+        checkFolderHeader('Other channels');
+      });
+
       testWidgets('DMs, pinned, folders in order, other', (tester) async {
         final folder1 = eg.channelFolder(name: 'Zebra', order: 0);
         final folder2 = eg.channelFolder(name: 'Alpha', order: 1);

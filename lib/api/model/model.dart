@@ -341,6 +341,7 @@ enum UserSettingName {
   displayEmojiReactionUsers,
   emojiset,
   presenceEnabled,
+  webInboxShowChannelFolders,
   ;
 
   /// Get a [UserSettingName] from a raw, snake-case string we recognize, else null.
