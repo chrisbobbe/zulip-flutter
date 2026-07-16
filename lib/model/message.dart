@@ -1240,7 +1240,7 @@ mixin _OutboxMessageStore on HasChannelStore {
           == OutboxMessageState.waitPeriodExpired) {
       // The user was offered to restore the message since the request did not
       // complete for a while.  Since the request was successful, we expect the
-      // message event to arrive eventually.  Stop inviting the the user to
+      // message event to arrive eventually.  Stop inviting the user to
       // retry, to avoid double-sends.
       _updateOutboxMessage(localMessageId, newState: OutboxMessageState.waiting);
     }
