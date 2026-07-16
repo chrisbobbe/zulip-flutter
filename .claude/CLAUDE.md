@@ -138,6 +138,17 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   content.
 
 
+## Reading GitHub in cloud sessions
+
+- On Claude Code on the web, the GitHub API is scoped to the
+  session's own repo. To read upstream issues and PRs,
+  use the built-in GitHub search tools with `repo:zulip/zulip-flutter`
+  in the query, or fetch the item's github.com URL with WebFetch.
+  Issue comments are reachable by neither route (PR comments are);
+  when an issue's comment thread matters, ask the user to paste it.
+  (Limitation tracked as anthropics/claude-code#78277.)
+
+
 ## Using Git
 
 - **Use `@` instead of `HEAD`** —
