@@ -109,4 +109,11 @@ push only to the session's own working branch. Review anything
 it produces like any other contributor's work, per Zulip's
 [AI use policy][ai-policy].
 
+Sessions also push on their own: when Claude reaches a stopping
+point, it pushes its branch, and there's no setting to gate that
+on your approval. So anything committed in a session becomes
+public then -- which is why
+[`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) tells Claude to
+keep reports and other non-repo output uncommitted.
+
 [ai-policy]: https://zulip.readthedocs.io/en/latest/contributing/contributing.html#ai-use-policy-and-guidelines
