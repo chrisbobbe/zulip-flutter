@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# SessionStart hook, configured in .claude/settings.json.
+#
+# In a Claude Code on the web session, finish connecting up the
+# environment provisioned by tools/provision-cloud (which runs as
+# the cloud environment's setup script; see docs/howto/claude-web.md).
+#
+# In other sessions (a local machine, the Lima VM), do nothing.
+
+if [ "${CLAUDE_CODE_REMOTE-}" != true ]; then
+    exit 0
+fi
+
+cd "$CLAUDE_PROJECT_DIR"
+
+# Halt if this session was started against the upstream repo instead
+# of a personal fork.  The team workflow is fork + PR; any commits
+# made here would be unpushable (or, worse, pushed to upstream).
+origin_url=$(git config --get remote.origin.url || true)
+case "$origin_url" in
+    *zulip/zulip-flutter|*zulip/zulip-flutter.git)
+        cat <<'EOF'
+{
+  "continue": false,
+  "stopReason": "This session is on zulip/zulip-flutter (the upstream repo). The team workflow is to work on a personal fork and submit PRs. Start a new session, choosing your fork from the repo dropdown."
+}
+EOF
+        exit 0;;
+esac
+
+# The session starts from a fresh clone of the repo, so fetch pub
+# deps (fast: the environment cache has a warm pub cache).
+# Quiet on success, because this hook's output lands in Claude's
+# context.  On failure, show the output and let Claude sort it out —
+# e.g. if the cached Flutter SDK has fallen behind pubspec.yaml's
+# minimum version, `flutter upgrade` fixes that.
+if ! output=$(flutter pub get 2>&1); then
+    echo "$output"
+    echo "cloud-session-start: \`flutter pub get\` failed; see above."
+fi
