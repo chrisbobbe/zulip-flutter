@@ -173,7 +173,18 @@ unaffected.
   any route, so when a comment thread matters, read it locally.
   Details and the full route matrix: [claude-code#78277][cc-78277].
 
+- `flutter test` needs a workaround: the proxy blocks
+  `package:sqlite3`'s prebuilt-library download, a GitHub
+  release asset of a repo other than the session's, which the
+  proxy's [documented repository scope][ccenv-scope] excludes
+  ([claude-code#78330][cc-78330]); so
+  [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md) has Claude
+  switch it to the system SQLite (which the setup script
+  installs) before running tests.
+
 [cc-78277]: https://github.com/anthropics/claude-code/issues/78277
+[cc-78330]: https://github.com/anthropics/claude-code/issues/78330
+[ccenv-scope]: https://code.claude.com/docs/en/cloud-environments#github-proxy
 
 
 ## Trust model

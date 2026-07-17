@@ -138,7 +138,28 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   content.
 
 
-## GitHub in cloud sessions
+## Cloud sessions (Claude Code on the web)
+
+- On Claude Code on the web, before running tests, apply this
+  workaround: the network proxy blocks `package:sqlite3`'s
+  download of its prebuilt library (anthropics/claude-code#78330),
+  which makes `flutter test` fail with a bogus hash-mismatch
+  error. Add to `pubspec.yaml`:
+
+  ```yaml
+  # Cloud-session workaround; do not commit.
+  hooks:
+    user_defines:
+      sqlite3:
+        source: system
+  ```
+
+  (The system SQLite it selects is installed by
+  tools/provision-cloud.) Never commit that hunk: take it back
+  out before committing any change to `pubspec.yaml`, and
+  discard it (`git checkout pubspec.yaml`) before finishing.
+  Likewise revert any `pubspec.lock` churn from the cached SDK
+  being off the pin. It isn't part of your change.
 
 - On Claude Code on the web, the GitHub API is scoped to the
   session's own repo. To read upstream issues and PRs,
