@@ -52,9 +52,24 @@ the PR ready for review once you'd stand behind it.
 
 ## Setting up an environment
 
-At [claude.ai/code][claude-code-web], create an environment for
-**your fork** (e.g. `chrisbobbe/zulip-flutter`), not the
-upstream repo. The team workflow is fork + PR, and a
+First, a one-time account-level step: install the
+[Claude GitHub App][claude-github-app] on your GitHub account
+and grant it your fork. The repo picker at
+[claude.ai/code][claude-code-web] lists only repos the app can
+access, so until then it comes up empty ("No repos match").
+
+If your Claude account has a seat in a Team or Enterprise
+organization, there's a gate before even that: an Owner of the
+Claude organization must have enabled GitHub access for Claude
+Code on the web, at claude.ai/admin-settings/claude-code. If
+they haven't, claude.ai/code says "GitHub access is required …
+contact an organization owner", and installing the GitHub App
+ends with "GitHub sync isn't available for your organization".
+(Personal accounts, like Pro/Max plans, don't have this gate.)
+
+Then, at [claude.ai/code][claude-code-web], create an
+environment for **your fork** (e.g. `chrisbobbe/zulip-flutter`),
+not the upstream repo. The team workflow is fork + PR, and a
 SessionStart hook (see below) warns off sessions started on
 upstream, where commits would have nowhere good to go.
 
@@ -95,6 +110,8 @@ web UI:
 - **Environment variables**: none needed; a GitHub token in
   particular gains nothing (see "Limitations / rough edges"
   below).
+
+[claude-github-app]: https://github.com/apps/claude
 
 
 ## How it works
