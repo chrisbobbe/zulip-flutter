@@ -2,6 +2,55 @@
 
 ## Unreleased
 
+### Highlights for users
+
+* (Android) Attach photos and videos using a modern, gallery-style
+  picker. (#1490, #1510)
+* A new help button on the login screen explains how to find your
+  Zulip server's URL. (#109)
+* Channel folders in the inbox now follow your "Show channel
+  folders" setting from the web app. (#2271)
+* Faster loading in organizations with many users. (#254)
+* No more topic input in the compose box for channels where topics
+  aren't allowed. (#1843)
+* (iOS) Restored support for iOS 15.
+* Too many other improvements and fixes to describe them all here.
+
+
+### Highlights for developers
+
+* Bumped the minimum supported Zulip Server version to 10.0;
+  the app no longer connects to servers older than 9.0.
+  (#1839, #2360, #2361)
+
+* Merge log: PRs, with fixed issues and user-visible changes.
+  * #2352.  Flutter and package upgrades.
+  * #2343: fix #2271.  Follow the "Show channel folders" web setting
+    in the inbox.
+  * #2320: fix #109.  Add login-screen help button for finding your
+    server URL; polish some button styles.
+  * #2264: fix part of #2263.  Use new check icon for resolved topics.
+  * #2331: fix #1490, fix #1510, fix part of #855.  Attach photos and
+    videos with Android's modern photo picker.
+  * #2359: fix #2358.  Fix emoji-picker matching on a literal-emoji
+    query.
+  * #2334: fix #2278.  Handle individual custom-emoji updates from
+    newer servers.
+  * #2360: fix #1839.  Don't allow connecting to Zulip Server <9.0.
+  * #2361.  Bump minimum supported Zulip Server to 10.0.
+  * #2372
+  * #2364: fix #254.  Faster loading in large organizations, by
+    letting the server omit avatar URLs for long-idle users.
+  * #2366
+  * #2369
+  * #2371
+  * #2370
+  * #2373.  Restore iOS 15 support, reverting the 16.0+ requirement.
+  * #2340: fix #1843.  Disable the topic input on channels that
+    allow only the empty topic.
+  * #2382: fix #2105.  Escape more punctuation when generating
+    message links, so they survive plain-text URL detection.
+
 
 ## 30.0.273 (2026-06-24)
 
