@@ -1454,7 +1454,25 @@ void main() {
         .page.isA<MessageListPage>().initNarrow.equals(const ChannelNarrow(1));
     });
 
-    // TODO(#1570): test links with /near/ go to the specific message
+    testWidgets('/near/ link follows the message through a move; see #683', (tester) async {
+      final pushedRoutes = await prepare(tester,
+        '<p><a href="/#narrow/stream/1-check/topic/test/near/378333">link</a></p>');
+
+      // The message is known locally, but has moved to a different topic than
+      // the link names; we should navigate to where it is now.
+      await store.addStream(eg.stream(streamId: 1, name: 'check'));
+      await store.addMessage(eg.streamMessage(
+        id: 378333, stream: eg.stream(streamId: 1, name: 'check'), topic: 'moved'));
+      await tapText(tester, find.text('link'));
+      // Let _launchUrl resolve and push its route, without pumping a frame
+      // (which would mount the message list and start its own fetch).
+      await tester.idle();
+      check(testBinding.takeLaunchUrlCalls()).isEmpty();
+      check(pushedRoutes).single.isA<WidgetRoute>()
+        .page.isA<MessageListPage>()
+          ..initNarrow.equals(eg.topicNarrow(1, 'moved'))
+          ..initAnchorMessageId.equals(378333);
+    });
 
     testWidgets('uploaded-file links are opened with temporary authed URL', (tester) async {
       final pushedRoutes = await prepare(tester,

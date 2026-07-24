@@ -1642,9 +1642,17 @@ void _launchUrl(BuildContext context, String urlString) async {
   assert(internalLink == null || internalLink.realmUrl == store.realmUrl);
   switch (internalLink) {
     case NarrowLink():
+      var narrow = internalLink.narrow;
+      if (internalLink.nearMessageId != null) {
+        // Follow the "near" message through any move, so we land in the
+        // conversation it's in now rather than the (possibly stale) one named
+        // in the link.
+        narrow = await ZulipAction.narrowForNearLink(context, internalLink);
+        if (!context.mounted) return;
+      }
       unawaited(Navigator.push(context,
         MessageListPage.buildRoute(context: context,
-          narrow: internalLink.narrow,
+          narrow: narrow,
           initAnchorMessageId: internalLink.nearMessageId)));
 
     case UserUploadLink():

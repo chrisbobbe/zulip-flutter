@@ -357,6 +357,30 @@ abstract final class ZulipAction {
     return tempUrl;
   }
 
+  /// The narrow to open for [link], following its "near" message through any
+  /// move to the conversation it's in now; see [adjustNarrowForNearMessage].
+  ///
+  /// This may fetch the message from the server.  Following a "near" link
+  /// through moves is best-effort: if the fetch fails, this falls back to
+  /// [link]'s own narrow.
+  // TODO(#683) give feedback while a fetch is in flight, and perhaps on error
+  static Future<Narrow> narrowForNearLink(BuildContext context, NarrowLink link) async {
+    final nearMessageId = link.nearMessageId;
+    if (nearMessageId == null) return link.narrow;
+
+    final store = PerAccountStoreWidget.of(context);
+    var message = store.messages[nearMessageId];
+    if (message == null) {
+      try {
+        message = (await getMessage(store.connection,
+          messageId: nearMessageId, allowEmptyTopicName: true)).message;
+      } catch (e) {
+        // TODO(log)
+      }
+    }
+    return adjustNarrowForNearMessage(link.narrow, message);
+  }
+
   static Future<void> subscribeToChannel(BuildContext context, {
     required int channelId,
   }) async {

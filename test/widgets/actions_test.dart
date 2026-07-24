@@ -22,6 +22,7 @@ import '../api/fake_api.dart';
 import '../example_data.dart' as eg;
 import '../flutter_checks.dart';
 import '../model/binding.dart';
+import '../model/test_store.dart';
 import '../stdlib_checks.dart';
 import '../test_clipboard.dart';
 import 'dialog_checks.dart';
@@ -280,6 +281,56 @@ void main() {
           ..body.isEmpty();
         check(await future).equals(
           store.tryResolveUrl('/temp/s3kr1t-auth-token/paper.pdf')!);
+      });
+    });
+
+    group('narrowForNearLink', () {
+      final channel = eg.stream(streamId: 1, name: 'channel');
+      final otherChannel = eg.stream(streamId: 2, name: 'other channel');
+
+      // A link into channel/'topic' near message 100, which has since moved
+      // to otherChannel/'moved'.
+      NarrowLink linkNearMovedMessage() =>
+        NarrowLink(eg.topicNarrow(channel.streamId, 'topic'), 100,
+          realmUrl: store.realmUrl);
+      final movedMessage =
+        eg.streamMessage(id: 100, stream: otherChannel, topic: 'moved');
+
+      testWidgets('no near operand: the link narrow, without a fetch', (tester) async {
+        await prepare(tester);
+        final link = NarrowLink(eg.topicNarrow(channel.streamId, 'topic'), null,
+          realmUrl: store.realmUrl);
+        check(await ZulipAction.narrowForNearLink(context, link))
+          .equals(eg.topicNarrow(channel.streamId, 'topic'));
+        check(connection.takeRequests()).isEmpty();
+      });
+
+      testWidgets('message found locally: follow it, without a fetch', (tester) async {
+        await prepare(tester);
+        await store.addStream(otherChannel);
+        await store.addMessage(movedMessage);
+        check(await ZulipAction.narrowForNearLink(context, linkNearMovedMessage()))
+          .equals(eg.topicNarrow(otherChannel.streamId, 'moved'));
+        check(connection.takeRequests()).isEmpty();
+      });
+
+      testWidgets('message not local: fetch it, then follow', (tester) async {
+        await prepare(tester);
+        connection.prepare(json: GetMessageResult(message: movedMessage).toJson());
+        final future = ZulipAction.narrowForNearLink(context, linkNearMovedMessage());
+        await tester.pump(Duration.zero); // let the getMessage fetch resolve
+        check(await future).equals(eg.topicNarrow(otherChannel.streamId, 'moved'));
+        check(connection.takeRequests()).single.isA<http.Request>()
+          ..method.equals('GET')
+          ..url.path.equals('/api/v1/messages/100');
+      });
+
+      testWidgets('fetch fails: fall back to the link narrow', (tester) async {
+        await prepare(tester);
+        connection.prepare(apiException: eg.apiBadRequest());
+        final future = ZulipAction.narrowForNearLink(context, linkNearMovedMessage());
+        await tester.pump(Duration.zero); // let the getMessage fetch resolve
+        check(await future).equals(eg.topicNarrow(channel.streamId, 'topic'));
       });
     });
   });

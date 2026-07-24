@@ -394,7 +394,44 @@ void main() {
       }
     });
 
-    // TODO(#1570): test parsing /near/ operator
+    group('"/near/<message-id>" gives expected nearMessageId', () {
+      Future<NarrowLink?> tryParse(String urlString) async {
+        final store = await setupStore(realmUrl: realmUrl, streams: streams);
+        final url = store.tryResolveUrl(urlString)!;
+        return parseInternalLink(url, store) as NarrowLink?;
+      }
+
+      test('topic narrow', () async {
+        check(await tryParse('/#narrow/channel/check/topic/test/near/378333')).isNotNull()
+          ..narrow.equals(eg.topicNarrow(1, 'test'))
+          ..nearMessageId.equals(378333);
+      });
+
+      test('channel narrow', () async {
+        check(await tryParse('/#narrow/channel/check/near/378333')).isNotNull()
+          ..narrow.equals(const ChannelNarrow(1))
+          ..nearMessageId.equals(378333);
+      });
+
+      test('dm narrow', () async {
+        check(await tryParse('/#narrow/dm/1,2-group/near/378333')).isNotNull()
+          ..narrow.equals(DmNarrow.withUsers([1, 2], selfUserId: eg.selfUser.userId))
+          ..nearMessageId.equals(378333);
+      });
+
+      test('no near operator', () async {
+        check(await tryParse('/#narrow/channel/check/topic/test')).isNotNull()
+          .nearMessageId.isNull();
+      });
+
+      test('invalid operand', () async {
+        check(await tryParse('/#narrow/channel/check/topic/test/near/asdf')).isNull();
+      });
+
+      test('duplicate near operators', () async {
+        check(await tryParse('/#narrow/channel/check/topic/test/near/1/near/2')).isNull();
+      });
+    });
 
     group('unexpected link shapes are rejected', () {
       final testCases = [
@@ -402,6 +439,59 @@ void main() {
         ('/#narrow/stream/name/unknown/operand/', null), // unknown operator
       ];
       testExpectedNarrows(testCases, streams: streams);
+    });
+  });
+
+  group('adjustNarrowForNearMessage', () {
+    final channel = eg.stream(streamId: 1, name: 'channel');
+    final otherChannel = eg.stream(streamId: 2, name: 'other channel');
+
+    test('non-conversation narrow: unchanged', () {
+      final narrow = DmNarrow.withUsers([eg.otherUser.userId],
+        selfUserId: eg.selfUser.userId);
+      check(adjustNarrowForNearMessage(narrow,
+        eg.streamMessage(stream: otherChannel))).equals(narrow);
+    });
+
+    test('no message found: unchanged', () {
+      final narrow = eg.topicNarrow(channel.streamId, 'topic');
+      check(adjustNarrowForNearMessage(narrow, null)).equals(narrow);
+    });
+
+    test('message is a DM: unchanged', () {
+      final narrow = eg.topicNarrow(channel.streamId, 'topic');
+      check(adjustNarrowForNearMessage(narrow,
+        eg.dmMessage(from: eg.otherUser, to: [eg.selfUser]))).equals(narrow);
+    });
+
+    test('channel narrow, message still in the channel: unchanged', () {
+      final narrow = ChannelNarrow(channel.streamId);
+      check(adjustNarrowForNearMessage(narrow,
+        eg.streamMessage(stream: channel))).equals(narrow);
+    });
+
+    test('channel narrow, message moved to another channel: retarget', () {
+      check(adjustNarrowForNearMessage(ChannelNarrow(channel.streamId),
+          eg.streamMessage(stream: otherChannel)))
+        .equals(ChannelNarrow(otherChannel.streamId));
+    });
+
+    test('topic narrow, message still in the conversation: unchanged', () {
+      final narrow = eg.topicNarrow(channel.streamId, 'topic');
+      check(adjustNarrowForNearMessage(narrow,
+        eg.streamMessage(stream: channel, topic: 'topic'))).equals(narrow);
+    });
+
+    test('topic narrow, message\'s topic resolved: follow to the new topic', () {
+      check(adjustNarrowForNearMessage(eg.topicNarrow(channel.streamId, 'topic'),
+          eg.streamMessage(stream: channel, topic: '✔ topic')))
+        .equals(eg.topicNarrow(channel.streamId, '✔ topic'));
+    });
+
+    test('topic narrow, message moved to another channel: retarget', () {
+      check(adjustNarrowForNearMessage(eg.topicNarrow(channel.streamId, 'topic'),
+          eg.streamMessage(stream: otherChannel, topic: 'moved')))
+        .equals(eg.topicNarrow(otherChannel.streamId, 'moved'));
     });
   });
 
@@ -625,4 +715,5 @@ extension InternalLinkChecks on Subject<InternalLink> {
 
 extension NarrowLinkChecks on Subject<NarrowLink> {
   Subject<Narrow> get narrow => has((x) => x.narrow, 'narrow');
+  Subject<int?> get nearMessageId => has((x) => x.nearMessageId, 'nearMessageId');
 }

@@ -133,6 +133,55 @@ class NarrowLink extends InternalLink {
   final int? nearMessageId;
 }
 
+/// The narrow to open for a "near" link, following the message it points at
+/// through any move to the conversation the message is in now.
+///
+/// A "near" link (`…/near/{messageId}`) points into a specific conversation.
+/// If the message has since moved — because its topic was renamed, resolved,
+/// or split up — then the channel/topic named in the link is stale, and we
+/// should instead go to wherever the message is now:
+///   https://github.com/zulip/zulip-flutter/issues/683
+///
+/// Given [message] — the message the link points at, or null if it couldn't
+/// be found — this returns a narrow on the message's current channel/topic
+/// when it has moved out of [narrow]'s channel/topic.  It returns [narrow]
+/// unchanged when there's nothing to follow: [narrow] doesn't name a
+/// channel/topic, [message] is null or isn't a channel message, or the
+/// message is still in [narrow]'s conversation.
+///
+/// Fetching [message] and any user feedback belong in the caller
+/// (see `ZulipAction.narrowForNearLink`); this function is just the decision.
+///
+/// Adapted from zulip-mobile's `adjustNarrowForMoves`.
+// TODO(#683): Only follow the move when the message was actually ever in
+//   [narrow]'s channel/topic, per the message's move history, as zulip-mobile
+//   does with an edit_history check.  We don't retain edit_history yet;
+//   see [Message] (its `edit_history` TODO).
+Narrow adjustNarrowForNearMessage(Narrow narrow, Message? message) {
+  final int channelIdOperand;
+  final TopicName? topicOperand;
+  switch (narrow) {
+    case ChannelNarrow():
+      channelIdOperand = narrow.channelId;
+      topicOperand = null;
+    case TopicNarrow():
+      channelIdOperand = narrow.channelId;
+      topicOperand = narrow.topic;
+    default:
+      return narrow;
+  }
+
+  if (message is! StreamMessage) return narrow;
+
+  final movedChannel = message.streamId != channelIdOperand;
+  final movedTopic = topicOperand != null && !message.topic.isSameAs(topicOperand);
+  if (!movedChannel && !movedTopic) return narrow;
+
+  return topicOperand == null
+    ? ChannelNarrow(message.streamId)
+    : TopicNarrow(message.streamId, message.topic);
+}
+
 /// A parsed link to an uploaded file in Zulip.
 ///
 /// The structure mirrors the data required for [getFileTemporaryUrl]:
