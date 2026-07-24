@@ -35,18 +35,18 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathsize="2.488em"><mn>1</mn><mstyle mathsize="2.074em"><mn>2</mn><mstyle mathsize="1.728em"><mn>3</mn><mstyle mathsize="1.44em"><mn>4</mn><mstyle mathsize="1.2em"><mn>5</mn><mstyle mathsize="1em"><mn>6</mn><mstyle mathsize="0.9em"><mn>7</mn><mstyle mathsize="0.8em"><mn>8</mn><mstyle mathsize="0.7em"><mn>9</mn><mstyle mathsize="0.5em"><mn>0</mn></mstyle></mstyle></mstyle></mstyle></mstyle></mstyle></mstyle></mstyle></mstyle></mstyle></mrow>'
           '<annotation encoding="application/x-tex">\\Huge 1\n\\huge 2\n\\LARGE 3\n\\Large 4\n\\large 5\n\\normalsize 6\n\\small 7\n\\footnotesize 8\n\\scriptsize 9\n\\tiny 0</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:1.6034em;"></span>'
-            '<span class="mord sizing reset-size6 size11">1</span>'
-            '<span class="mord sizing reset-size6 size10">2</span>'
-            '<span class="mord sizing reset-size6 size9">3</span>'
-            '<span class="mord sizing reset-size6 size8">4</span>'
-            '<span class="mord sizing reset-size6 size7">5</span>'
-            '<span class="mord sizing reset-size6 size6">6</span>'
-            '<span class="mord sizing reset-size6 size5">7</span>'
-            '<span class="mord sizing reset-size6 size4">8</span>'
-            '<span class="mord sizing reset-size6 size3">9</span>'
-            '<span class="mord sizing reset-size6 size1">0</span></span></span></span></span></p>', [
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:1.6034em;"></span>'
+            '<span class="mord katex-sizing reset-size6 size11">1</span>'
+            '<span class="mord katex-sizing reset-size6 size10">2</span>'
+            '<span class="mord katex-sizing reset-size6 size9">3</span>'
+            '<span class="mord katex-sizing reset-size6 size8">4</span>'
+            '<span class="mord katex-sizing reset-size6 size7">5</span>'
+            '<span class="mord katex-sizing reset-size6 size6">6</span>'
+            '<span class="mord katex-sizing reset-size6 size5">7</span>'
+            '<span class="mord katex-sizing reset-size6 size4">8</span>'
+            '<span class="mord katex-sizing reset-size6 size3">9</span>'
+            '<span class="mord katex-sizing reset-size6 size1">0</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 1.6034, verticalAlignEm: null),
         KatexSpanNode(
@@ -90,11 +90,11 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathsize="0.5em"><mrow><mn>1</mn><mstyle mathsize="2.488em"><mn>2</mn></mstyle></mrow></mstyle></mrow>'
           '<annotation encoding="application/x-tex">\\tiny {1 \\Huge 2}</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:1.6034em;"></span>'
-            '<span class="mord sizing reset-size6 size1">'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:1.6034em;"></span>'
+            '<span class="mord katex-sizing reset-size6 size1">'
               '<span class="mord">1</span>'
-              '<span class="mord sizing reset-size1 size11">2</span></span></span></span></span></span></p>', [
+              '<span class="mord katex-sizing reset-size1 size11">2</span></span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 1.6034, verticalAlignEm: null),
         KatexSpanNode(
@@ -117,8 +117,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo stretchy="false">⟨</mo><mo fence="false" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><mo fence="false" stretchy="true" minsize="1.8em" maxsize="1.8em">[</mo><mo fence="false" stretchy="true" minsize="2.4em" maxsize="2.4em">⌈</mo><mo fence="false" stretchy="true" minsize="3em" maxsize="3em">⌊</mo></mrow>'
           '<annotation encoding="application/x-tex">⟨ \\big( \\Big[ \\bigg⌈ \\Bigg⌊</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:3em;vertical-align:-1.25em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:3em;vertical-align:-1.25em;"></span>'
             '<span class="mopen">⟨</span>'
             '<span class="mord"><span class="delimsizing size1">(</span></span>'
             '<span class="mord"><span class="delimsizing size2">[</span></span>'
@@ -158,14 +158,14 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>1</mn><mo>:</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">1:2</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord">1</span>'
             '<span class="mspace" style="margin-right:0.2778em;"></span>'
             '<span class="mrel">:</span>'
             '<span class="mspace" style="margin-right:0.2778em;"></span></span>'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord">2</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 0.6444, verticalAlignEm: null),
@@ -193,8 +193,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>a</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup></mrow>'
           '<annotation encoding="application/x-tex">a&#x27;</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.8019em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.8019em;"></span>'
             '<span class="mord">'
               '<span class="mord mathnormal">a</span>'
               '<span class="msupsub">'
@@ -203,7 +203,7 @@ class KatexExample extends ContentExample {
                     '<span class="vlist" style="height:0.8019em;">'
                       '<span style="top:-3.113em;margin-right:0.05em;">'
                         '<span class="pstrut" style="height:2.7em;"></span>'
-                        '<span class="sizing reset-size6 size3 mtight">'
+                        '<span class="katex-sizing reset-size6 size3 mtight">'
                           '<span class="mord mtight">'
                             '<span class="mord mtight">′</span></span></span></span></span></span></span></span></span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
@@ -243,8 +243,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>x</mi><mi>n</mi></msub></mrow>'
           '<annotation encoding="application/x-tex">x_n</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.5806em;vertical-align:-0.15em;"></span>'
             '<span class="mord">'
               '<span class="mord mathnormal">x</span>'
               '<span class="msupsub">'
@@ -253,7 +253,7 @@ class KatexExample extends ContentExample {
                     '<span class="vlist" style="height:0.1514em;">'
                       '<span style="top:-2.55em;margin-left:0em;margin-right:0.05em;">'
                         '<span class="pstrut" style="height:2.7em;"></span>'
-                        '<span class="sizing reset-size6 size3 mtight">'
+                        '<span class="katex-sizing reset-size6 size3 mtight">'
                           '<span class="mord mathnormal mtight">n</span></span></span></span>'
                     '<span class="vlist-s">​</span></span>'
                   '<span class="vlist-r">'
@@ -297,8 +297,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msubsup><mrow></mrow><mi>u</mi><mi>o</mi></msubsup></mrow>'
           '<annotation encoding="application/x-tex">_u^o</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.9614em;vertical-align:-0.247em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.9614em;vertical-align:-0.247em;"></span>'
             '<span class="mord">'
               '<span></span>'
               '<span class="msupsub">'
@@ -307,11 +307,11 @@ class KatexExample extends ContentExample {
                     '<span class="vlist" style="height:0.7144em;">'
                       '<span style="top:-2.453em;margin-right:0.05em;">'
                         '<span class="pstrut" style="height:2.7em;"></span>'
-                        '<span class="sizing reset-size6 size3 mtight">'
+                        '<span class="katex-sizing reset-size6 size3 mtight">'
                           '<span class="mord mathnormal mtight">u</span></span></span>'
                       '<span style="top:-3.113em;margin-right:0.05em;">'
                         '<span class="pstrut" style="height:2.7em;"></span>'
-                        '<span class="sizing reset-size6 size3 mtight">'
+                        '<span class="katex-sizing reset-size6 size3 mtight">'
                           '<span class="mord mathnormal mtight">o</span></span></span></span>'
                     '<span class="vlist-s">​</span></span>'
                   '<span class="vlist-r">'
@@ -365,8 +365,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>a</mi><mpadded voffset="0.25em"><mstyle scriptlevel="0" displaystyle="false"><mstyle scriptlevel="0" displaystyle="false"><mi>b</mi></mstyle></mstyle></mpadded><mi>c</mi></mrow>'
           '<annotation encoding="application/x-tex">a\\raisebox{0.25em}{\$b\$}c</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.9444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.9444em;"></span>'
             '<span class="mord mathnormal">a</span>'
             '<span class="vlist-t">'
               '<span class="vlist-r">'
@@ -406,8 +406,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mn>1</mn><mtext> ⁣</mtext><mn>2</mn></mrow><annotation encoding="application/x-tex">1 \\! 2</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord">1</span>'
             '<span class="mspace" style="margin-right:-0.1667em;"></span>'
             '<span class="mord">2</span></span></span></span></span></p>', [
@@ -430,8 +430,8 @@ class KatexExample extends ContentExample {
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>KaTeX</mtext></mrow>'
           '<annotation encoding="application/x-tex">\\KaTeX</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.8988em;vertical-align:-0.2155em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.8988em;vertical-align:-0.2155em;"></span>'
             '<span class="mord text">'
               '<span class="mord textrm">K</span>'
               '<span class="mspace" style="margin-right:-0.17em;"></span>'
@@ -440,7 +440,7 @@ class KatexExample extends ContentExample {
                   '<span style="top:-2.905em;">'
                     '<span class="pstrut" style="height:2.7em;"></span>'
                     '<span class="mord">'
-                      '<span class="mord textrm mtight sizing reset-size6 size3">A</span></span></span></span></span></span>'
+                      '<span class="mord textrm mtight katex-sizing reset-size6 size3">A</span></span></span></span></span></span>'
               '<span class="mspace" style="margin-right:-0.15em;"></span>'
               '<span class="mord text">'
                 '<span class="mord textrm">T</span>'
@@ -517,8 +517,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>X</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">X_n</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.8333em;vertical-align:-0.15em;"></span>'
             '<span class="mord">'
               '<span class="mord mathnormal" style="margin-right:0.07847em;">X</span>'
               '<span class="msupsub">'
@@ -527,7 +527,7 @@ class KatexExample extends ContentExample {
                     '<span class="vlist" style="height:0.1514em;">'
                       '<span style="top:-2.55em;margin-left:-0.0785em;margin-right:0.05em;">'
                         '<span class="pstrut" style="height:2.7em;"></span>'
-                        '<span class="sizing reset-size6 size3 mtight">'
+                        '<span class="katex-sizing reset-size6 size3 mtight">'
                           '<span class="mord mathnormal mtight">n</span></span></span></span>'
                     '<span class="vlist-s">​</span></span>'
                   '<span class="vlist-r">'
@@ -575,8 +575,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathcolor="#f00"><mn>0</mn></mstyle></mrow><annotation encoding="application/x-tex">\\color{#f00} 0</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord" style="color:#f00;">0</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 0.6444, verticalAlignEm: null),
@@ -594,8 +594,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathcolor="red"><mn>1</mn></mstyle></mrow><annotation encoding="application/x-tex">\\textcolor{red} 1</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord" style="color:red;">1</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 0.6444, verticalAlignEm: null),
@@ -614,8 +614,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle mathcolor="#df0030"><mn>2</mn></mstyle></mrow><annotation encoding="application/x-tex">\\red 2</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.6444em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.6444em;"></span>'
             '<span class="mord" style="color:#df0030;">2</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 0.6444, verticalAlignEm: null),
@@ -633,8 +633,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mphantom><mo>∗</mo></mphantom></mrow><annotation encoding="application/x-tex">\\phantom{*}</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.4653em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.4653em;"></span>'
             '<span class="mord" style="color:transparent;">∗</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 0.4653, verticalAlignEm: null),
@@ -652,8 +652,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo>∫</mo></mrow><annotation encoding="application/x-tex">\\int</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:2.2222em;vertical-align:-0.8622em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:2.2222em;vertical-align:-0.8622em;"></span>'
             '<span class="mop op-symbol large-op" style="margin-right:0.44445em;position:relative;top:-0.0011em;">∫</span></span></span></span></span></p>', [
       KatexSpanNode(nodes: [
         KatexStrutNode(heightEm: 2.2222, verticalAlignEm: -0.8622),
@@ -675,8 +675,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo><mi mathvariant="normal">≔</mi></mo></mrow><annotation encoding="application/x-tex">\\colonequals</annotation></semantics></math></span>'
         '<span class="katex-html" aria-hidden="true">'
-          '<span class="base">'
-            '<span class="strut" style="height:0.4306em;"></span>'
+          '<span class="katex-base">'
+            '<span class="katex-strut" style="height:0.4306em;"></span>'
             '<span class="mrel">'
               '<span class="mrel">'
                 '<span class="mop" style="position:relative;top:-0.0347em;">:</span></span>'
@@ -708,8 +708,8 @@ class KatexExample extends ContentExample {
       '<span class="katex-display"><span class="katex">'
         '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>a</mi><mo fence="true" lspace="0.05em" rspace="0.05em">.</mo><mi>b</mi></mrow><annotation encoding="application/x-tex">\\left. a \\middle. b \\right.</annotation></semantics></math></span>'
       '<span class="katex-html" aria-hidden="true">'
-        '<span class="base">'
-          '<span class="strut" style="height:0.6944em;"></span>'
+        '<span class="katex-base">'
+          '<span class="katex-strut" style="height:0.6944em;"></span>'
           '<span class="minner">'
             '<span class="mopen nulldelimiter"></span>'
             '<span class="mord mathnormal">a</span>'
@@ -728,6 +728,106 @@ class KatexExample extends ContentExample {
             styles: KatexSpanStyles(fontFamily: 'KaTeX_Math', fontStyle: KatexSpanFontStyle.italic),
             text: 'b'),
           KatexSpanNode(styles: KatexSpanStyles(widthEm: 0.12), nodes: []),
+        ]),
+      ]),
+    ]);
+
+  // The next two examples use the legacy CSS class names, from before KaTeX
+  // 0.18.0 prefixed `base`, `strut`, and `sizing` (among others) with `katex-`.
+  // The other examples use the current prefixed names; content rendered by an
+  // older server keeps the unprefixed names indefinitely, since the server
+  // doesn't re-render existing messages when it upgrades KaTeX.
+  //   https://github.com/zulip/zulip-flutter/issues/2387
+  static final legacyClassNames = KatexExample.block(
+    'legacy CSS class names, from before KaTeX 0.18.0',
+    // https://chat.zulip.org/#narrow/channel/7-test-here/topic/Chris/near/2500806
+    'x^2',
+    '<p>'
+      '<span class="katex-display"><span class="katex">'
+        '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow>'
+          '<annotation encoding="application/x-tex">x^2</annotation></semantics></math></span>'
+        '<span class="katex-html" aria-hidden="true">'
+          '<span class="base">'
+            '<span class="strut" style="height:0.8641em;"></span>'
+            '<span class="mord">'
+              '<span class="mord mathnormal">x</span>'
+              '<span class="msupsub">'
+                '<span class="vlist-t">'
+                  '<span class="vlist-r">'
+                    '<span class="vlist" style="height:0.8641em;">'
+                      '<span style="top:-3.113em;margin-right:0.05em;">'
+                        '<span class="pstrut" style="height:2.7em;"></span>'
+                        '<span class="sizing reset-size6 size3 mtight">'
+                          '<span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></span></p>', [
+      KatexSpanNode(nodes: [
+        KatexStrutNode(heightEm: 0.8641, verticalAlignEm: null),
+        KatexSpanNode(nodes: [
+          KatexSpanNode(
+            styles: KatexSpanStyles(
+              fontFamily: 'KaTeX_Math', fontStyle: KatexSpanFontStyle.italic),
+            text: 'x'),
+          KatexSpanNode(
+            styles: KatexSpanStyles(textAlign: KatexSpanTextAlign.left),
+            nodes: [
+              KatexVlistNode(rows: [
+                KatexVlistRowNode(
+                  verticalOffsetEm: -3.113 + 2.7,
+                  node: KatexSpanNode(
+                    styles: KatexSpanStyles(marginRightEm: 0.05),
+                    nodes: [
+                      KatexSpanNode(styles: KatexSpanStyles(fontSizeEm: 0.7), nodes: [
+                        KatexSpanNode(text: '2'),
+                      ]),
+                    ])),
+              ]),
+            ]),
+        ]),
+      ]),
+    ]);
+
+  static final legacyClassNamesInline = KatexExample.inline(
+    'legacy CSS class names, inline, from before KaTeX 0.18.0',
+    // https://chat.zulip.org/#narrow/channel/7-test-here/topic/Chris/near/2500807
+    'x^2',
+    '<p>'
+      '<span class="katex">'
+        '<span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup></mrow>'
+          '<annotation encoding="application/x-tex">x^2</annotation></semantics></math></span>'
+        '<span class="katex-html" aria-hidden="true">'
+          '<span class="base">'
+            '<span class="strut" style="height:0.8141em;"></span>'
+            '<span class="mord">'
+              '<span class="mord mathnormal">x</span>'
+              '<span class="msupsub">'
+                '<span class="vlist-t">'
+                  '<span class="vlist-r">'
+                    '<span class="vlist" style="height:0.8141em;">'
+                      '<span style="top:-3.063em;margin-right:0.05em;">'
+                        '<span class="pstrut" style="height:2.7em;"></span>'
+                        '<span class="sizing reset-size6 size3 mtight">'
+                          '<span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span></p>', [
+      KatexSpanNode(nodes: [
+        KatexStrutNode(heightEm: 0.8141, verticalAlignEm: null),
+        KatexSpanNode(nodes: [
+          KatexSpanNode(
+            styles: KatexSpanStyles(
+              fontFamily: 'KaTeX_Math', fontStyle: KatexSpanFontStyle.italic),
+            text: 'x'),
+          KatexSpanNode(
+            styles: KatexSpanStyles(textAlign: KatexSpanTextAlign.left),
+            nodes: [
+              KatexVlistNode(rows: [
+                KatexVlistRowNode(
+                  verticalOffsetEm: -3.063 + 2.7,
+                  node: KatexSpanNode(
+                    styles: KatexSpanStyles(marginRightEm: 0.05),
+                    nodes: [
+                      KatexSpanNode(styles: KatexSpanStyles(fontSizeEm: 0.7), nodes: [
+                        KatexSpanNode(text: '2'),
+                      ]),
+                    ])),
+              ]),
+            ]),
         ]),
       ]),
     ]);
@@ -754,6 +854,8 @@ void main() async {
   testParseExample(KatexExample.bigOperators);
   testParseExample(KatexExample.colonEquals);
   testParseExample(KatexExample.nulldelimiter);
+  testParseExample(KatexExample.legacyClassNames);
+  testParseExample(KatexExample.legacyClassNamesInline);
 
   group('parseCssHexColor', () {
     const testCases = [
