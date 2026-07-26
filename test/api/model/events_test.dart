@@ -69,6 +69,22 @@ void main() {
       {'id': 1, 'type': 'realm_user', 'op': 'update',
        'person': {'user_id': 1, ...data}};
 
+    test('avatar_url absent', () {
+      check(Event.fromJson(mkJson({})))
+        .isA<RealmUserUpdateEvent>().avatarUrl.isNull();
+    });
+
+    test('avatar_url null', () {
+      check(Event.fromJson(mkJson({'avatar_url': null})))
+        .isA<RealmUserUpdateEvent>().avatarUrl.equals(const JsonNullable(null));
+    });
+
+    test('avatar_url a string', () {
+      check(Event.fromJson(mkJson({'avatar_url': '/foo.png'})))
+        .isA<RealmUserUpdateEvent>().avatarUrl.equals(
+          const JsonNullable('/foo.png'));
+    });
+
     test('delivery_email absent', () {
       check(Event.fromJson(mkJson({})))
         .isA<RealmUserUpdateEvent>().deliveryEmail.isNull();

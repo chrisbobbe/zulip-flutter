@@ -64,6 +64,27 @@ void main() {
   group('RealmUserUpdateEvent', () {
     // TODO write more tests for handling RealmUserUpdateEvent
 
+    test('avatarUrl', () async {
+      final user = eg.user(avatarUrl: const JsonNullable('/foo.png'));
+      final store = eg.store(initialSnapshot: eg.initialSnapshot(
+        realmUsers: [eg.selfUser, user]));
+
+      User getUser() => store.getUser(user.userId)!;
+
+      await store.handleEvent(RealmUserUpdateEvent(id: 1, userId: user.userId,
+        avatarUrl: null));
+      check(getUser()).avatarUrl.equals(const JsonNullable('/foo.png'));
+
+      // The server says the avatar is now a Gravatar for us to compute.
+      await store.handleEvent(RealmUserUpdateEvent(id: 1, userId: user.userId,
+        avatarUrl: const JsonNullable(null)));
+      check(getUser()).avatarUrl.equals(const JsonNullable(null));
+
+      await store.handleEvent(RealmUserUpdateEvent(id: 1, userId: user.userId,
+        avatarUrl: const JsonNullable('/bar.png')));
+      check(getUser()).avatarUrl.equals(const JsonNullable('/bar.png'));
+    });
+
     test('deliveryEmail', () async {
       final user = eg.user(deliveryEmail: 'a@mail.example');
       final store = eg.store(initialSnapshot: eg.initialSnapshot(

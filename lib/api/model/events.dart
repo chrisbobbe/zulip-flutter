@@ -626,7 +626,12 @@ class RealmUserUpdateEvent extends RealmUserEvent {
   @JsonKey(readValue: _readFromPerson) final int userId;
 
   @JsonKey(readValue: _readFromPerson) final String? fullName;
-  @JsonKey(readValue: _readFromPerson) final String? avatarUrl;
+
+  /// The new avatar, with the same meanings as [User.avatarUrl],
+  /// or absent if the avatar didn't change.
+  @JsonKey(readValue: _readNullableStringFromPerson)
+  @NullableStringJsonConverter()
+  final JsonNullable<String>? avatarUrl;
   // @JsonKey(readValue: _readFromPerson) final String? avatarSource; // TODO obsolete?
   // @JsonKey(readValue: _readFromPerson) final String? avatarUrlMedium; // TODO obsolete?
   @JsonKey(readValue: _readFromPerson) final int? avatarVersion;

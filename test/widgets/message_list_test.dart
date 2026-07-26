@@ -2277,7 +2277,8 @@ void main() {
       }
 
       Future<void> handleNewAvatarEventAndPump(WidgetTester tester, String avatarUrl) async {
-        await store.handleEvent(RealmUserUpdateEvent(id: 1, userId: user.userId, avatarUrl: avatarUrl));
+        await store.handleEvent(RealmUserUpdateEvent(id: 1, userId: user.userId,
+          avatarUrl: JsonNullable(avatarUrl)));
         await tester.pump();
       }
 
