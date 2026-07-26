@@ -48,8 +48,28 @@ server_user=zulipdev
 export EXTERNAL_HOST=localhost:9991
 url=http://$EXTERNAL_HOST
 
+pidfile=$zulip_dir/var/run-dev.pid
+
 serving() {
     curl -sf -o /dev/null --max-time 3 "$url"/health 2>/dev/null
+}
+
+# Stop by recorded PID rather than by matching command lines: a
+# pattern like `pkill -f tools/run-dev` also matches any shell whose
+# own command line happens to mention it, up to and including the one
+# running this script.
+stop_server() {
+    local pid
+    pid=$(cat "$pidfile" 2>/dev/null) || return 0
+    rm -f "$pidfile"
+    [ -n "$pid" ] || return 0
+    # run-dev cleans up the processes it started when signaled.
+    kill "$pid" 2>/dev/null || return 0
+    for _ in $(seq 50); do
+        kill -0 "$pid" 2>/dev/null || return 0
+        sleep 0.2
+    done
+    kill -9 "$pid" 2>/dev/null || true
 }
 
 case "$command" in
@@ -63,7 +83,15 @@ case "$command" in
         exit 0
         ;;
     stop)
-        pkill -f 'tools/run-dev' || true
+        stop_server
+        if serving; then
+            cat >&2 <<EOF
+error: Still serving at $url, with no PID recorded in
+  $pidfile
+  to stop.  Something else started this server; stop that instead.
+EOF
+            exit 1
+        fi
         echo "stopped"
         exit 0
         ;;
@@ -121,10 +149,13 @@ echo "==> Starting run-dev"
 log=$zulip_dir/var/run-dev.log
 # Detached, so this script can wait for the server to come up and then
 # return, leaving it serving for the rest of the session.
+# `exec` makes run-dev inherit the shell's PID, so the pidfile it
+# writes just before is run-dev's own.
 setsid --fork \
     sudo -u "$server_user" -H \
     env EXTERNAL_HOST="$EXTERNAL_HOST" \
-    bash -c "cd $zulip_dir && . .venv/bin/activate && exec ./tools/run-dev" \
+    bash -c "cd '$zulip_dir' && . .venv/bin/activate \
+             && echo \$\$ >'$pidfile' && exec ./tools/run-dev" \
     >"$log" 2>&1
 
 # First boot compiles assets, so allow generous time.
