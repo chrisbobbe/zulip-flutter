@@ -1,3 +1,10 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+
+import '../api/model/model.dart';
+import 'store.dart';
+
 /// The size threshold above which is "medium" size for an avatar.
 ///
 /// This is in physical pixels, i.e. image pixels:
@@ -9,20 +16,35 @@
 const defaultUploadSizePx = 100;
 
 abstract class AvatarUrl {
-  /// The right [AvatarUrl] subclass for the given user data.
-  ///
-  /// [resolvedUrl] is the user's `avatar_url` resolved against the realm URL,
-  /// or null if the server omitted the field; see `user_avatar_url_field_optional`
-  /// at https://zulip.com/api/register-queue#parameter-client_capabilities .
-  factory AvatarUrl.fromUserData({
-    required Uri? resolvedUrl,
-    required int userId,
+  /// The right [AvatarUrl] subclass for the given user,
+  /// or null if the server sent an `avatar_url` we failed to parse.
+  static AvatarUrl? tryFromUserData({
+    required User user,
     required Uri realmUrl,
   }) {
-    // TODO(#255): handle computing gravatars
-    if (resolvedUrl == null) {
-      return FallbackAvatarUrl(realmUrl: realmUrl, userId: userId);
-    } else if (resolvedUrl.toString().startsWith(GravatarUrl.origin)) {
+    final rawUrl = user.avatarUrl;
+    if (rawUrl == null) {
+      // The server omitted the field; see [User.avatarUrl].
+      return FallbackAvatarUrl(realmUrl: realmUrl, userId: user.userId);
+    }
+
+    final url = rawUrl.value;
+    if (url == null) {
+      // The avatar is a Gravatar, for us to compute; see [User.avatarUrl].
+      // The server does that only for users whose email address is visible
+      // to everyone, and it hashes the delivery email; so we should have it.
+      final email = user.deliveryEmail;
+      if (email == null) { // TODO(log)
+        return FallbackAvatarUrl(realmUrl: realmUrl, userId: user.userId);
+      }
+      return GravatarUrl.computeFromEmail(email);
+    }
+
+    final resolvedUrl = tryResolveUrl(realmUrl, url);
+    if (resolvedUrl == null) return null;
+
+    // The trailing slash ensures we've examined the whole origin.
+    if (resolvedUrl.toString().startsWith('${GravatarUrl.origin}/')) {
       return GravatarUrl(resolvedUrl: resolvedUrl);
     } else {
       return UploadedAvatarUrl(resolvedUrl: resolvedUrl);
@@ -35,7 +57,28 @@ abstract class AvatarUrl {
 class GravatarUrl implements AvatarUrl {
   GravatarUrl({required Uri resolvedUrl}) : standardUrl = resolvedUrl;
 
-  static String origin = 'https://secure.gravatar.com';
+  /// The Gravatar URL for the given email address.
+  ///
+  /// This is the URL the server would have sent as the user's `avatar_url`
+  /// if we hadn't claimed `client_gravatar`:
+  ///   https://zulip.com/api/register-queue#parameter-client_gravatar
+  /// It follows `_get_unversioned_gravatar_url` in zerver/lib/avatar.py,
+  /// minus the `version` parameter the server adds for cache-busting
+  /// (which is meaningless for an image Gravatar serves).
+  ///
+  /// One divergence: a server with Gravatar disabled for this realm alone,
+  /// with GRAVATAR_REALM_OVERRIDE, still says null under `client_gravatar`,
+  /// so we compute this where the server would have used a default avatar.
+  GravatarUrl.computeFromEmail(String email)
+    : standardUrl = Uri.parse('$origin/avatar/${_hash(email)}?d=identicon');
+
+  static const String origin = 'https://secure.gravatar.com';
+
+  /// The Gravatar hash of an email address.
+  ///
+  /// This is `gravatar_hash` in zerver/lib/avatar_hash.py.
+  static String _hash(String email) =>
+    md5.convert(utf8.encode(email.toLowerCase())).toString();
 
   Uri standardUrl;
 
