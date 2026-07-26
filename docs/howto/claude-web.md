@@ -80,21 +80,47 @@ web UI:
   invalidate it on their own.
 
 - **Network access**: "Custom", with "Also include default
-  list of common package managers" checked, and two allowed
-  domains. The default list covers what the setup script needs
-  (apt, GitHub, pub.dev); the two domains below otherwise get
-  403s from the egress proxy (2026-07):
+  list of common package managers" checked, and the allowed
+  domains below. The default list covers what the setup script
+  needs (apt, GitHub, pub.dev); these otherwise get 403s from
+  the egress proxy, whose body names the host and says to add
+  it here (2026-07):
 
   - `chat.zulip.org`, for reading chat threads linked from
     issues and PRs;
   - `zulip.com`, for reading API docs.
 
+  Add these three as well if you want sessions to be able to
+  provision a Zulip dev server (see below).  `tools/provision`
+  in `../zulip` reaches all three while setting up apt, and
+  gives up if any of them 403s:
+
+  - `apt.postgresql.org`, the PGDG repo;
+  - `packages.groonga.org`, which serves the package that adds
+    the pgroonga repo;
+  - `ppa.launchpadcontent.net`, the libheif PPA.
+
+  The last is worth adding either way: the base image ships
+  its own PPAs on that host, and their 403s are why
+  `tools/provision-cloud` has to tolerate `apt-get update`
+  exiting nonzero.
+
   (Changing the allowed domains invalidates the environment
   cache.)
 
-- **Environment variables**: none needed; a GitHub token in
-  particular gains nothing (see "Limitations / rough edges"
-  below).
+- **Environment variables**: none needed for ordinary work; a
+  GitHub token in particular gains nothing (see "Limitations /
+  rough edges" below).
+
+  Two are worth setting if sessions will provision a dev
+  server, since the egress gateway presents its own TLS
+  certificate and neither tool consults the system trust store
+  that already holds the gateway's CA:
+
+  - `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt`,
+    or pnpm fails with `SELF_SIGNED_CERT_IN_CHAIN`;
+  - `UV_SYSTEM_CERTS=1`, or uv fails with
+    `invalid peer certificate: UnknownIssuer`.
 
 
 ## How it works
@@ -153,6 +179,13 @@ unaffected.
   switch it to the system SQLite (which the setup script
   installs) before running tests.
 
+  Adding a domain to the environment's allowed list won't fix
+  this one. The download comes from a GitHub release, on
+  `simolus3/sqlite3.dart`, and what refuses it is the GitHub
+  scoping proxy rather than the egress allowlist: it answers
+  "GitHub access to this repository is not enabled for this
+  session", as it does for any repo but the session's own.
+
 [cc-78277]: https://github.com/anthropics/claude-code/issues/78277
 [cc-78330]: https://github.com/anthropics/claude-code/issues/78330
 
@@ -174,25 +207,25 @@ it's worth doing only when live-server testing is the point.
 
 Use the [Vagrant-less direct install][provision-direct], since
 the session container is already the disposable sandbox that
-Vagrant would otherwise provide.  Five things differ from a
-normal direct install:
+Vagrant would otherwise provide.  Set up the environment's
+allowed domains and environment variables first, as above;
+with those in place `tools/provision` runs unmodified, and
+only three things differ from a normal direct install:
 
 - **Provision refuses to run as root**, and sessions run as
   root; make a normal user and give it the checkout.
 - **There's no systemd.**  Set `GITHUB_ACTIONS=true` so
   provision starts postgres/redis/memcached/rabbitmq with
-  plain `service` commands, as Zulip's own CI does.
-- **Some package hosts are blocked** by the network proxy:
-  `apt.postgresql.org`, `packages.groonga.org`, and
-  `ppa.launchpadcontent.net`.  Noble's own postgresql-16 is
-  the version provision wants anyway, the groonga PPA already
-  carries `postgresql-16-pgroonga`, and the launchpadcontent
-  PPAs are reachable under the older `ppa.launchpad.net` name.
-- **The proxy's TLS interception** breaks pnpm and uv until
-  they're pointed at its CA bundle, via `NODE_EXTRA_CA_CERTS`
-  and `SSL_CERT_FILE` respectively.
+  plain `service` commands, as Zulip's own CI does.  That's
+  the flag's only effect on provision.
 - **The container has no IPv6**, so memcached's default
-  `-l 127.0.0.1,::1` leaves it dead; bind it to IPv4 only.
+  `-l 127.0.0.1,::1` leaves it dead — while its init script
+  still reports it running, from a stale pidfile.  Bind it to
+  IPv4 only, or Django 500s on every cache read.
+
+Don't point apt at the egress proxy: it reaches the archives
+on its own, and setting `Acquire::http::Proxy` makes the proxy
+answer plain-http archive.ubuntu.com with 405s.
 
 Then `tools/run-dev` serves on `localhost:9991`, with realms
 at the hostname-derived names in `/api/v1/dev_list_users`
