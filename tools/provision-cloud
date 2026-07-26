@@ -76,4 +76,68 @@ echo "==> Cloning the Zulip server repo"
 # get fetched on demand.
 git clone --filter=blob:none https://github.com/zulip/zulip ../zulip
 
+# Sessions run as root but don't own the clone once it's handed to
+# the server user below, and Git refuses to operate on a repo owned
+# by someone else without this.
+git config --global --add safe.directory "$(cd ../zulip && pwd -P)"
+
+provision_dev_server() {
+    local zulip_dir server_user
+    zulip_dir=$(cd ../zulip && pwd -P)
+    # Keep in sync with tools/cloud-dev-server, which runs the server.
+    server_user=zulipdev
+
+    # `tools/provision` refuses to run as root, and sessions are root,
+    # so hand the checkout to an ordinary user with sudo.
+    id -u "$server_user" >/dev/null 2>&1 \
+        || useradd -m -s /bin/bash "$server_user"
+    chown -R "$server_user":"$server_user" "$zulip_dir"
+
+    # sudo clears the environment, and provision reads the proxy
+    # variables to reach the package repositories; keep those.
+    cat >/etc/sudoers.d/"$server_user" <<EOF
+$server_user ALL=(ALL) NOPASSWD:ALL
+Defaults env_keep += "http_proxy https_proxy no_proxy HTTP_PROXY HTTPS_PROXY NO_PROXY"
+EOF
+    chmod 440 /etc/sudoers.d/"$server_user"
+
+    # GITHUB_ACTIONS makes provision start the backing services with
+    # plain `service` commands rather than systemctl, which this
+    # container doesn't have.  That's its only effect on provision.
+    #
+    # The two TLS variables are set here rather than asked of the
+    # environment, since these values are right for any cloud session:
+    # the egress gateway serves its own certificate, and neither pnpm
+    # nor uv consults the system trust store that already holds its CA.
+    sudo -u "$server_user" -H \
+         env GITHUB_ACTIONS=true \
+             NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt \
+             UV_SYSTEM_CERTS=1 \
+             bash -c "cd '$zulip_dir' && ./tools/provision"
+}
+
+if [ -n "${ZULIP_DEV_SERVER-}" ]; then
+    echo "==> Provisioning the Zulip server"
+    # Opt-in, because it takes 10-20 minutes and most sessions never
+    # want a server.  Doing it here rather than in a session is the
+    # whole point: only this script's work reaches the environment
+    # cache, so a session that provisioned its own would pay the cost
+    # again every time.  tools/cloud-dev-server then starts it in a
+    # session, in seconds rather than minutes.
+    #
+    # Needs allowed domains and TLS variables set on the environment;
+    # see docs/howto/claude-web.md.  If they're missing this fails, so
+    # keep going rather than take the whole environment down with it:
+    # sessions can still do everything that doesn't want a server, and
+    # tools/cloud-dev-server explains itself when there's nothing to
+    # start.
+    if ! provision_dev_server; then
+        echo >&2
+        echo >&2 "warning: Provisioning the Zulip server failed; see above."
+        echo >&2 "  Sessions will work, but without a dev server to run."
+        echo >&2 "  Check the allowed domains and environment variables in"
+        echo >&2 "  docs/howto/claude-web.md, then rebuild the environment."
+    fi
+fi
+
 echo "==> Done."

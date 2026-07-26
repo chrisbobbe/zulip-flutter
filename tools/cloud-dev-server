@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Start (or stop) a Zulip dev server in a Claude Code on the web
+# session, for trying API calls against a live server.  See
+# docs/howto/claude-web.md, and the "Zulip dev server" section of
+# .claude/CLAUDE.md for how Claude is meant to use it.
+#
+# The expensive part -- `tools/provision` in the server checkout --
+# happens once, in tools/provision-cloud, so that it lands in the
+# environment cache.  This script does the cheap per-session part:
+# nothing survives a session but the filesystem, so the backing
+# services have to be started again each time.
+
+usage() {
+    cat >&2 <<EOF
+usage: tools/cloud-dev-server [start|stop|status]
+
+Starts a Zulip dev server at http://localhost:9991 (the default),
+stops it, or reports whether it's serving.
+EOF
+    exit 2
+}
+
+command=${1-start}
+case "$command" in
+    start | stop | status) ;;
+    *) usage ;;
+esac
+[ $# -le 1 ] || usage
+
+this_dir=${BASH_SOURCE[0]%/*}
+rootdir=$(cd "$this_dir"/.. && pwd -P)
+zulip_dir=$(cd "$rootdir"/../zulip 2>/dev/null && pwd -P) || {
+    echo >&2 "error: No server checkout at $rootdir/../zulip."
+    exit 1
+}
+
+# The user that owns the checkout and runs the server; created by
+# tools/provision-cloud, because `tools/provision` refuses to run
+# as root and sessions are root.
+server_user=zulipdev
+
+# Serving the main dev realm at plain localhost takes an explicit
+# EXTERNAL_HOST: left unset, dev_settings.py puts the realms on
+# subdomains of the container's hostname, which resolve nowhere.
+# It also turns off the dev CAPTCHA, which would otherwise be on.
+export EXTERNAL_HOST=localhost:9991
+url=http://$EXTERNAL_HOST
+
+serving() {
+    curl -sf -o /dev/null --max-time 3 "$url"/health 2>/dev/null
+}
+
+case "$command" in
+    status)
+        if serving; then
+            echo "serving at $url"
+        else
+            echo "not serving"
+            exit 1
+        fi
+        exit 0
+        ;;
+    stop)
+        pkill -f 'tools/run-dev' || true
+        echo "stopped"
+        exit 0
+        ;;
+esac
+
+if [ "$(id -u)" != 0 ]; then
+    echo >&2 "error: Must run as root, to start the backing services."
+    exit 1
+fi
+
+if serving; then
+    echo "already serving at $url"
+    exit 0
+fi
+
+if [ ! -e "$zulip_dir"/.venv/bin/activate ]; then
+    cat >&2 <<EOF
+error: The server checkout at $zulip_dir isn't provisioned.
+
+  Provisioning happens in tools/provision-cloud, which does it only
+  when the environment sets ZULIP_DEV_SERVER=1.  Add that to the
+  environment's "Environment variables" field, along with the
+  allowed domains a dev server needs, and start a new session; see
+  docs/howto/claude-web.md.
+EOF
+    exit 1
+fi
+
+# memcached's packaged config listens on ::1 as well as 127.0.0.1,
+# and the container has no IPv6, so it fails to bind and dies -- while
+# `service memcached status` still reports it running, from a stale
+# pidfile.  Django then 500s on every cache read.
+if grep -qx -- '-l 127.0.0.1,::1' /etc/memcached.conf; then
+    sed -i 's/^-l 127\.0\.0\.1,::1$/-l 127.0.0.1/' /etc/memcached.conf
+fi
+
+echo "==> Starting backing services"
+# No systemd here, so drive the init scripts directly.  Same set, and
+# the same reason, as the CI branch of the server's tools/provision.
+#
+# Stay quiet unless one of them actually fails: redis-server's init
+# script can't raise its fd limit in this container and says so on
+# stderr, which reads alarmingly for something harmless.  What decides
+# whether the stack really came up is the health check below, which
+# covers all four -- run-dev won't serve /health without them.
+for service in postgresql redis-server memcached rabbitmq-server; do
+    if ! output=$(service "$service" start 2>&1); then
+        echo >&2 "$output"
+        echo >&2 "error: failed to start $service"
+        exit 1
+    fi
+done
+
+echo "==> Starting run-dev"
+log=$zulip_dir/var/run-dev.log
+# Detached, so this script can wait for the server to come up and then
+# return, leaving it serving for the rest of the session.
+setsid --fork \
+    sudo -u "$server_user" -H \
+    env EXTERNAL_HOST="$EXTERNAL_HOST" \
+    bash -c "cd $zulip_dir && . .venv/bin/activate && exec ./tools/run-dev" \
+    >"$log" 2>&1
+
+# First boot compiles assets, so allow generous time.
+for _ in $(seq 120); do
+    serving && break
+    sleep 2
+done
+
+if ! serving; then
+    echo >&2 "error: run-dev didn't come up; last 20 lines of $log:"
+    tail -20 "$log" >&2
+    exit 1
+fi
+
+cat <<EOF
+==> Serving at $url  (log: $log)
+
+Get an API key for any dev user, no password needed:
+  curl -sX $url/api/v1/dev_fetch_api_key -d username=iago@zulip.com
+EOF

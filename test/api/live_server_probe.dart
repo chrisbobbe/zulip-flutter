@@ -1,9 +1,12 @@
 /// Probe: drive the real API bindings against a live Zulip dev server.
 ///
-/// Not part of the normal test suite; needs a dev server at [realmUrl].
-/// Run with:
+/// Not part of the normal test suite; needs a dev server at [realmUrl],
+/// which `tools/cloud-dev-server` starts in a cloud session.  Run with:
+///
+///   key=$(curl -s http://localhost:9991/api/v1/dev_fetch_api_key \
+///     -d username=iago@zulip.com | jq -r .api_key)
 ///   flutter test --no-pub test/api/live_server_probe.dart \
-///     --dart-define=ZULIP_API_KEY=...
+///     --dart-define=ZULIP_API_KEY="$key"
 library;
 
 // This probe reports what the live server said; printing is its whole point.
@@ -19,7 +22,7 @@ import 'package:zulip/api/route/messages.dart';
 import 'package:zulip/api/route/realm.dart';
 import 'package:zulip/api/route/users.dart';
 
-final realmUrl = Uri.parse('http://zulip.vm:9991');
+final realmUrl = Uri.parse('http://localhost:9991');
 
 const email = 'iago@zulip.com';
 const apiKey = String.fromEnvironment('ZULIP_API_KEY');
