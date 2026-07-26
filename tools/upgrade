@@ -18,7 +18,7 @@ this_dir=${BASH_SOURCE[0]%/*}
 
 ## CLI PARSING
 
-default_steps=(pod pub pub-major)
+default_steps=(pod pub pub-major icons)
 
 usage() {
     cat <<EOF
@@ -49,6 +49,10 @@ The steps are:
               here, the resulting commit is only a draft and requires
               human editing and review.
 
+  icons       Upgrade the NPM packages that tools/icons/build-icon-font
+              depends on, within the constraints expressed in
+              tools/icons/package.json.
+
 Options:
 
   --no-pod    Skip running CocoaPods.  This is convenient for
@@ -62,7 +66,7 @@ while (( $# )); do
     case "$1" in
         --no-pod)
             opt_pod=; shift;;
-        pod|flutter-local|pub|pub-major)
+        pod|flutter-local|pub|pub-major|icons)
             opt_steps+=("$1"); shift;;
         --help) usage; exit 0;;
         *) usage >&2; exit 2;;
@@ -88,6 +92,16 @@ check_have_cocoapods() {
         echo >&2 "This script requires CocoaPods, in order to keep"
         echo >&2 "the CocoaPods lockfiles in sync with our \`pubspec.lock\`."
         echo >&2 "Try running it in a development environment on macOS."
+        return 1
+    fi
+}
+
+check_have_npm() {
+    if ! type npm >/dev/null; then
+        echo >&2 "No \`npm\` command found."
+        echo >&2
+        echo >&2 "This script requires npm, in order to upgrade the NPM packages"
+        echo >&2 "that \`tools/icons/build-icon-font\` depends on."
         return 1
     fi
 }
@@ -313,6 +327,28 @@ EOF
     fi
 }
 
+upgrade_icons() {
+    check_have_npm
+    check_no_uncommitted_or_untracked
+
+    # Upgrade within the constraints expressed in tools/icons/package.json.
+    # This updates tools/icons/package-lock.json, mostly for transitive
+    # dependencies; the node_modules/ tree is gitignored.
+    ( cd tools/icons && run_visibly npm update --no-fund --no-audit )
+
+    # TODO consider rerunning build-icon-font, at least when the generator
+    #   itself was updated, in case its output changed.
+
+    if no_uncommitted_changes; then
+        echo >&2 "npm update: No changes."
+        return
+    fi
+
+    git commit -a -m "\
+deps: Upgrade tools/icons NPM packages (tools/upgrade icons)
+"
+}
+
 divider_line='================================================================'
 
 for step in "${opt_steps[@]}"; do
@@ -324,6 +360,7 @@ for step in "${opt_steps[@]}"; do
         flutter-local) upgrade_flutter_local ;;
         pub)       upgrade_pub ;;
         pub-major) upgrade_pub_major ;;
+        icons)     upgrade_icons ;;
         *)   echo >&2 "Internal error: unknown step ${step}" ;;
     esac
 done
