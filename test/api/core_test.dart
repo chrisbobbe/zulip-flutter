@@ -283,13 +283,21 @@ void main() {
     }
 
     final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
+    checkRequest(const SocketException('Oops'), (it) => it
+      ..kind.equals(NetworkExceptionKind.connectionFailed)
+      ..message.equals(zulipLocalizations.errorNetworkRequestFailed)
+      ..asString.equals(
+        'NetworkException: Network request failed (SocketException: Oops)'));
     checkRequest(http.ClientException('Oops'), (it) => it
+      ..kind.equals(NetworkExceptionKind.other)
       ..message.equals('Oops')
       ..asString.equals('NetworkException: Oops (ClientException: Oops)'));
     checkRequest(const TlsException('Oops'), (it) => it
+      ..kind.equals(NetworkExceptionKind.other)
       ..message.equals('Oops')
       ..asString.equals('NetworkException: Oops (TlsException: Oops)'));
     checkRequest((foo: 'bar'), (it) => it
+      ..kind.equals(NetworkExceptionKind.other)
       ..message.equals(zulipLocalizations.errorNetworkRequestFailed)
       ..asString.equals('NetworkException: Network request failed ((foo: bar))'));
   });

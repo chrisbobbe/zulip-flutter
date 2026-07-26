@@ -686,6 +686,44 @@ void main() {
         users.map((expected) => (it) => it.fullName.equals(expected.fullName)));
     }));
 
+    group('registerQueue error reporting', () {
+      String? lastReportedError;
+
+      Future<void> prepare() async {
+        lastReportedError = null;
+        reportErrorToUserBriefly = (message, {details}) async {
+          if (message == null) return;
+          lastReportedError = message;
+        };
+        addTearDown(() =>
+          reportErrorToUserBriefly = defaultReportErrorToUserBriefly);
+        await prepareStore();
+        globalStore.useCachedApiConnections = true;
+      }
+
+      /// Load, with the first registerQueue attempt failing with [exception]
+      /// and the retry succeeding.
+      Future<void> loadWithFirstAttemptFailing(Object exception) async {
+        connection.prepare(httpException: exception);
+        connection.prepare(json: eg.initialSnapshot().toJson());
+        final updateMachine = await UpdateMachine.load(
+          globalStore, eg.selfAccount.id);
+        updateMachine.debugPauseLoop();
+      }
+
+      test('no report on failed connection', () => awaitFakeAsync((async) async {
+        await prepare();
+        await loadWithFirstAttemptFailing(const SocketException('failed'));
+        check(lastReportedError).isNull();
+      }));
+
+      test('report other network error', () => awaitFakeAsync((async) async {
+        await prepare();
+        await loadWithFirstAttemptFailing(Exception('failed'));
+        check(lastReportedError).isNotNull();
+      }));
+    });
+
     // TODO test UpdateMachine.load starts polling loop
   });
 
@@ -902,7 +940,10 @@ void main() {
       updateMachine.debugPrepareLoopError(eg.nullCheckError());
     }
 
-    void prepareNetworkExceptionSocketException() {
+    // A [SocketException] is what `dart:io`'s HTTP client throws
+    // for a failed connection; [ApiConnection] classifies it as
+    // [NetworkExceptionKind.connectionFailed].
+    void prepareNetworkExceptionConnectionFailed() {
       connection.prepare(httpException: const SocketException('failed'));
     }
 
@@ -969,9 +1010,9 @@ void main() {
       checkReload(prepareUnexpectedLoopError);
     });
 
-    test('retries on NetworkException from SocketException', () {
+    test('retries on NetworkException from failed connection', () {
       // We skip reporting errors on these; check we retry them all the same.
-      checkRetry(prepareNetworkExceptionSocketException);
+      checkRetry(prepareNetworkExceptionConnectionFailed);
     });
 
     test('retries on generic NetworkException', () {
@@ -1111,8 +1152,8 @@ void main() {
         checkReported(prepareUnexpectedLoopError);
       });
 
-      test('ignore NetworkException from SocketException', () {
-        checkNotReported(prepareNetworkExceptionSocketException);
+      test('ignore NetworkException from failed connection', () {
+        checkNotReported(prepareNetworkExceptionConnectionFailed);
       });
 
       test('eventually report generic NetworkException', () {

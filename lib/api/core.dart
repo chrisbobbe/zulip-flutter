@@ -188,7 +188,8 @@ class ApiConnection {
         final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
         message = zulipLocalizations.errorNetworkRequestFailed;
       }
-      throw NetworkException(routeName: routeName, cause: e, message: message);
+      throw NetworkException(routeName: routeName,
+        kind: _networkExceptionKind(e), cause: e, message: message);
     }
 
     final int httpStatus = response.statusCode;
@@ -278,6 +279,18 @@ class ApiConnection {
     }
     return send(routeName, fromJson, request);
   }
+}
+
+/// Classify an exception thrown by the underlying HTTP client.
+///
+/// This is the one place that maps the HTTP client's exception types onto
+/// [NetworkExceptionKind]; a different client implementation, which reports
+/// these conditions with different exception types, is accommodated here.
+NetworkExceptionKind _networkExceptionKind(Object cause) {
+  return switch (cause) {
+    SocketException() => NetworkExceptionKind.connectionFailed,
+    _                 => NetworkExceptionKind.other,
+  };
 }
 
 ApiRequestException _makeApiException(String routeName, int httpStatus, Map<String, dynamic>? json) {
