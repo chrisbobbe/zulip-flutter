@@ -157,6 +157,60 @@ unaffected.
 [cc-78330]: https://github.com/anthropics/claude-code/issues/78330
 
 
+## Running a dev server in a session
+
+A session can run a real Zulip dev server, so Claude can try
+API calls against a live server instead of only against
+`FakeApiConnection` fixtures.  `../zulip` is already checked
+out in the session, and the container is Ubuntu 24.04, a
+platform [`tools/provision`][provision-direct] supports.
+
+You won't be able to reach the server yourself: the container
+takes no inbound connections, so `localhost:9991` is reachable
+only from inside the session.  It's a testbed for Claude, not
+a Zulip you can click around in.  It also evaporates with the
+session, and a from-scratch provision takes 10–20 minutes, so
+it's worth doing only when live-server testing is the point.
+
+Use the [Vagrant-less direct install][provision-direct], since
+the session container is already the disposable sandbox that
+Vagrant would otherwise provide.  Five things differ from a
+normal direct install:
+
+- **Provision refuses to run as root**, and sessions run as
+  root; make a normal user and give it the checkout.
+- **There's no systemd.**  Set `GITHUB_ACTIONS=true` so
+  provision starts postgres/redis/memcached/rabbitmq with
+  plain `service` commands, as Zulip's own CI does.
+- **Some package hosts are blocked** by the network proxy:
+  `apt.postgresql.org`, `packages.groonga.org`, and
+  `ppa.launchpadcontent.net`.  Noble's own postgresql-16 is
+  the version provision wants anyway, the groonga PPA already
+  carries `postgresql-16-pgroonga`, and the launchpadcontent
+  PPAs are reachable under the older `ppa.launchpad.net` name.
+- **The proxy's TLS interception** breaks pnpm and uv until
+  they're pointed at its CA bundle, via `NODE_EXTRA_CA_CERTS`
+  and `SSL_CERT_FILE` respectively.
+- **The container has no IPv6**, so memcached's default
+  `-l 127.0.0.1,::1` leaves it dead; bind it to IPv4 only.
+
+Then `tools/run-dev` serves on `localhost:9991`, with realms
+at the hostname-derived names in `/api/v1/dev_list_users`
+(add them to `/etc/hosts`).  `POST /api/v1/dev_fetch_api_key`
+gets credentials for any dev user without a password.
+
+To exercise our own bindings rather than curl, see
+[`test/api/live_server_probe.dart`](../../test/api/live_server_probe.dart).
+Note it builds `ApiConnection` directly rather than with
+`ApiConnection.live`, to skip the `ZulipBinding` dependency;
+once [#2335][] makes `lib/api` usable from plain Dart, a
+standalone script could drive the bindings without
+`flutter test` at all.
+
+[provision-direct]: https://zulip.readthedocs.io/en/latest/development/setup-advanced.html#installing-directly-on-ubuntu-debian-centos-or-fedora
+[#2335]: https://github.com/zulip/zulip-flutter/issues/2335
+
+
 ## Trust model
 
 Unlike the [Lima setup](lima.md#trust-model), where pushing is
