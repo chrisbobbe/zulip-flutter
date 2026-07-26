@@ -173,6 +173,40 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   for review. See docs/howto/claude-web.md ("Trust model").
 
 
+## Zulip dev server (cloud sessions)
+
+Some cloud environments have a Zulip dev server provisioned into
+them, for trying API calls against a live server.
+
+```bash
+tools/cloud-dev-server status   # is one available, and serving?
+tools/cloud-dev-server          # start it; serves localhost:9991
+tools/cloud-dev-server stop
+```
+
+If it isn't provisioned, `status` says so and `start` explains what
+the environment is missing; don't try to provision one within a
+session, which would cost 10–20 minutes and vanish when the session
+ends. Tell the user what's missing instead.
+
+- Get an API key for any dev user, no password needed:
+  `curl -sX http://localhost:9991/api/v1/dev_fetch_api_key -d username=iago@zulip.com`
+
+- To drive our own API bindings against it rather than curl, see
+  `test/api/live_server_probe.dart`.
+
+- **Don't reach for it by default.** Tests use `FakeApiConnection`,
+  and that stays the right tool for testing our own logic. A live
+  server answers a different kind of question: what the server
+  actually does — the shape of a response, whether a route behaves
+  as the API docs say, how a new binding fares against a real
+  server. Reach for it when that's the question.
+
+- The user can't see it. The container takes no inbound
+  connections, so it's reachable only from within the session;
+  don't suggest they open it in a browser.
+
+
 ## Using Git
 
 - **Use `@` instead of `HEAD`** —

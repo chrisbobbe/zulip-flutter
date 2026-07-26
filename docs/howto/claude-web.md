@@ -201,44 +201,76 @@ platform [`tools/provision`][provision-direct] supports.
 You won't be able to reach the server yourself: the container
 takes no inbound connections, so `localhost:9991` is reachable
 only from inside the session.  It's a testbed for Claude, not
-a Zulip you can click around in.  It also evaporates with the
-session, and a from-scratch provision takes 10–20 minutes, so
-it's worth doing only when live-server testing is the point.
+a Zulip you can click around in.
 
-Use the [Vagrant-less direct install][provision-direct], since
-the session container is already the disposable sandbox that
-Vagrant would otherwise provide.  Set up the environment's
-allowed domains and environment variables first, as above;
-with those in place `tools/provision` runs unmodified, and
-only three things differ from a normal direct install:
+To enable it, set `ZULIP_DEV_SERVER=1` in the environment's
+"Environment variables" field, along with the three allowed
+domains above.  `tools/provision-cloud` then provisions the
+server checkout, and `tools/cloud-dev-server` starts it in a
+session:
 
-- **Provision refuses to run as root**, and sessions run as
-  root; make a normal user and give it the checkout.
-- **There's no systemd.**  Set `GITHUB_ACTIONS=true` so
-  provision starts postgres/redis/memcached/rabbitmq with
-  plain `service` commands, as Zulip's own CI does.  That's
-  the flag's only effect on provision.
-- **The container has no IPv6**, so memcached's default
-  `-l 127.0.0.1,::1` leaves it dead — while its init script
-  still reports it running, from a stale pidfile.  Bind it to
-  IPv4 only, or Django 500s on every cache read.
+```bash
+tools/cloud-dev-server status   # is one available, and serving?
+tools/cloud-dev-server          # start it
+tools/cloud-dev-server stop
+```
 
-Don't point apt at the egress proxy: it reaches the archives
-on its own, and setting `Acquire::http::Proxy` makes the proxy
-answer plain-http archive.ubuntu.com with 405s.
+Provisioning happens at cache-build time deliberately.  It
+takes 10–20 minutes, and only the setup script's work reaches
+the environment cache, so a session that provisioned its own
+would pay that cost every time.  Starting an already-provisioned
+one takes about 15 seconds, or a couple of minutes the first
+time after provisioning, when it still has assets to compile.
+The tradeoff is that every rebuild of the cache pays the
+provisioning cost, which is why it's opt-in.  If provisioning
+fails, the build carries on without a dev server rather than
+leaving you with no environment at all.
 
-Then `tools/run-dev` serves on `localhost:9991`, with realms
-at the hostname-derived names in `/api/v1/dev_list_users`
-(add them to `/etc/hosts`).  `POST /api/v1/dev_fetch_api_key`
-gets credentials for any dev user without a password.
-
-To exercise our own bindings rather than curl, see
-[`test/api/live_server_probe.dart`](../../test/api/live_server_probe.dart).
+`POST /api/v1/dev_fetch_api_key` then gets credentials for any
+dev user without a password, and
+[`test/api/live_server_probe.dart`](../../test/api/live_server_probe.dart)
+drives our own bindings against the server rather than curl.
 Note it builds `ApiConnection` directly rather than with
 `ApiConnection.live`, to skip the `ZulipBinding` dependency;
 once [#2335][] makes `lib/api` usable from plain Dart, a
 standalone script could drive the bindings without
 `flutter test` at all.
+
+### What the scripts work around
+
+Recorded here because the scripts' comments are terse, and
+because anyone provisioning a server by hand will meet these.
+The container is Ubuntu 24.04, a platform
+[`tools/provision`][provision-direct] supports directly; use
+that Vagrant-less path, since the session container is already
+the disposable sandbox Vagrant would otherwise provide.  With
+the allowed domains set, provision runs unmodified, and only
+three things differ from a normal direct install:
+
+- **Provision refuses to run as root**, and sessions run as
+  root; hence the `zulipdev` user that owns the checkout.
+- **There's no systemd**, hence `GITHUB_ACTIONS=true`, which
+  makes provision start postgres/redis/memcached/rabbitmq with
+  plain `service` commands, as Zulip's own CI does.  That's
+  the flag's only effect on provision.
+- **The container has no IPv6**, so memcached's default
+  `-l 127.0.0.1,::1` leaves it dead — while its init script
+  still reports it running, from a stale pidfile.  Django then
+  500s on every cache read.
+
+Two more, about running the server rather than provisioning it:
+
+- **Set `EXTERNAL_HOST=localhost:9991`.**  Left unset,
+  `dev_settings.py` puts the realms on subdomains of the
+  container's hostname, which resolve nowhere; setting it
+  serves the main realm at plain `localhost` and turns off the
+  dev CAPTCHA.  Beware that naming the server user `zulipdev`
+  is itself load-bearing here: that name is how the server
+  detects a dev droplet, which changes the default.
+- **Don't point apt at the egress proxy.**  It reaches the
+  archives on its own, and setting `Acquire::http::Proxy`
+  makes the proxy answer plain-http archive.ubuntu.com with
+  405s.
 
 [provision-direct]: https://zulip.readthedocs.io/en/latest/development/setup-advanced.html#installing-directly-on-ubuntu-debian-centos-or-fedora
 [#2335]: https://github.com/zulip/zulip-flutter/issues/2335
