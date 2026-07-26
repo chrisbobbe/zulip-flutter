@@ -284,6 +284,11 @@ int _lastEmailSuffix = 1000;
 ///
 /// If `email` is not given, it defaults to `deliveryEmail` if given and non-null,
 /// or else to a value resembling the Zulip server's generated fake emails.
+///
+/// If `avatarUrl` is not given, it defaults to null, meaning the server
+/// omitted the field; see [User.avatarUrl].
+/// Pass `JsonNullable(null)` for a Gravatar the client is to compute,
+/// or `JsonNullable(someUrl)` for a URL the server provided.
 User user({
   int? userId,
   String? deliveryEmail,
@@ -294,7 +299,7 @@ User user({
   bool? isBot,
   int? botOwnerId,
   UserRole? role,
-  String? avatarUrl,
+  JsonNullable<String>? avatarUrl,
   Map<int, ProfileFieldUserData>? profileData,
 }) {
   _checkPositive(userId, 'user ID');

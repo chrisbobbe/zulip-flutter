@@ -4,6 +4,7 @@ import '../../basic.dart';
 import '../../model/algorithms.dart';
 import 'events.dart';
 import 'initial_snapshot.dart';
+import 'json.dart';
 import 'reaction.dart';
 import 'submessage.dart';
 
@@ -498,7 +499,20 @@ class User {
   @JsonKey(unknownEnumValue: UserRole.unknown)
   UserRole role;
   String timezone;
-  String? avatarUrl; // TODO(#255) distinguish null from missing, as a `JsonNullable<String>?`
+  /// The user's avatar, as an absolute or realm-relative URL;
+  /// or null meaning it's a Gravatar for us to compute;
+  /// or absent meaning the server declined to say.
+  ///
+  /// The server sends null when we claim `client_gravatar`, and
+  /// omits the field when we claim `user_avatar_url_field_optional`;
+  /// we claim both.  See:
+  ///   https://zulip.com/api/register-queue#parameter-client_gravatar
+  ///   https://zulip.com/api/register-queue#parameter-client_capabilities
+  ///
+  /// To interpret this, see `AvatarUrl.tryFromUserData` in `model/avatar_url.dart`.
+  @JsonKey(readValue: JsonNullable.readStringFromJson, includeIfNull: false)
+  @NullableStringJsonConverter()
+  JsonNullable<String>? avatarUrl;
   int avatarVersion;
 
   // null for bots, which don't have custom profile fields.

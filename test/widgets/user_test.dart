@@ -29,7 +29,8 @@ void main() {
       matching: find.byIcon(ZulipIcons.person),
     );
 
-    Future<Uri?> actualUrl(WidgetTester tester, String? avatarUrl, [double? size]) async {
+    Future<Uri?> actualUrl(WidgetTester tester, JsonNullable<String>? avatarUrl,
+        [double? size]) async {
       addTearDown(testBinding.reset);
       await testBinding.globalStore.add(eg.selfAccount, eg.initialSnapshot());
       store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
@@ -50,14 +51,14 @@ void main() {
 
     testWidgets('smoke with absolute URL', (tester) async {
       const avatarUrl = 'https://example/avatar.png';
-      check(await actualUrl(tester, avatarUrl)).isNotNull()
+      check(await actualUrl(tester, const JsonNullable(avatarUrl))).isNotNull()
         .asString.equals(avatarUrl);
       debugNetworkImageHttpClientProvider = null;
     });
 
     testWidgets('smoke with relative URL', (tester) async {
       const avatarUrl = '/avatar.png';
-      check(await actualUrl(tester, avatarUrl))
+      check(await actualUrl(tester, const JsonNullable(avatarUrl)))
         .equals(store.tryResolveUrl(avatarUrl)!);
       debugNetworkImageHttpClientProvider = null;
     });
@@ -67,7 +68,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       const avatarUrl = 'https://example/avatar.png';
-      check(await actualUrl(tester, avatarUrl, 50)).isNotNull()
+      check(await actualUrl(tester, const JsonNullable(avatarUrl), 50)).isNotNull()
         .asString.equals(avatarUrl.replaceAll('.png', '-medium.png'));
       debugNetworkImageHttpClientProvider = null;
     });
@@ -77,14 +78,14 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       const avatarUrl = '/avatar.png';
-      check(await actualUrl(tester, avatarUrl, 50))
+      check(await actualUrl(tester, const JsonNullable(avatarUrl), 50))
         .equals(store.tryResolveUrl('/avatar-medium.png')!);
       debugNetworkImageHttpClientProvider = null;
     });
 
     testWidgets('smoke with invalid URL', (tester) async {
       const avatarUrl = '::not a URL::';
-      check(await actualUrl(tester, avatarUrl)).isNull();
+      check(await actualUrl(tester, const JsonNullable(avatarUrl))).isNull();
       debugNetworkImageHttpClientProvider = null;
     });
 
@@ -129,7 +130,8 @@ void main() {
       await testBinding.globalStore.add(eg.selfAccount, eg.initialSnapshot());
       final store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
 
-      final badUser = eg.user(avatarUrl: 'https://zulip.com/avatarinvalid.png');
+      final badUser = eg.user(
+        avatarUrl: const JsonNullable('https://zulip.com/avatarinvalid.png'));
       await store.addUser(badUser);
 
       await tester.pumpWidget(

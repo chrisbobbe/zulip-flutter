@@ -2285,7 +2285,7 @@ void main() {
 
       await setupMessageListPage(tester, users: [user],
         messages: [eg.streamMessage(sender: user)]);
-      checkResultForSender(user.avatarUrl);
+      checkResultForSender(user.avatarUrl?.value);
 
       await handleNewAvatarEventAndPump(tester, '/foo.png');
       checkResultForSender('/foo.png');
@@ -2438,7 +2438,7 @@ void main() {
         check(contentFinder.evaluate().length).equals(expectIsMuted ? 0 : 1);
       }
 
-      final user = eg.user(userId: 1, fullName: 'User', avatarUrl: '/foo.png');
+      final user = eg.user(userId: 1, fullName: 'User', avatarUrl: JsonNullable('/foo.png'));
       final message = eg.streamMessage(sender: user,
         content: '<p>A message</p>', reactions: [eg.unicodeEmojiReaction]);
 

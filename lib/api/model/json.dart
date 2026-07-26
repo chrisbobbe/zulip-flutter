@@ -26,6 +26,14 @@ class JsonNullable<T extends Object> {
 
   final T? value;
 
+  /// The value, for encoding to JSON with [jsonEncode].
+  ///
+  /// This makes a [JsonNullable] usable in a JSON-like value
+  /// as produced by a generated `toJson` method:
+  /// the converters in this library leave the [JsonNullable] in place
+  /// (see [IdentityJsonConverter]), so encoding the result relies on this.
+  T? toJson() => value;
+
   /// Reads a [JsonNullable] from a JSON map, as in [JsonKey.readValue].
   ///
   /// The method actually passed to [JsonKey.readValue] needs a concrete type;

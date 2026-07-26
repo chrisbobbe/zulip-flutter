@@ -125,6 +125,28 @@ void main() {
         .isNotNull().keys.single.equals(1);
     });
 
+    test('avatar_url', () {
+      check(mkUser({}).avatarUrl).isNull();
+      check(mkUser({'avatar_url': null}).avatarUrl)
+        .equals(const JsonNullable(null));
+      check(mkUser({'avatar_url': '/foo.png'}).avatarUrl)
+        .equals(const JsonNullable('/foo.png'));
+    });
+
+    test('avatar_url encodes back to JSON', () {
+      // The absent/null distinction has to survive encoding, because
+      // example data in tests gets sent through toJson and jsonEncode.
+      Map<String, dynamic> encoded(JsonNullable<String>? avatarUrl) =>
+        jsonDecode(jsonEncode(eg.user(avatarUrl: avatarUrl).toJson()))
+          as Map<String, dynamic>;
+      check(encoded(null)).not((it) => it.containsKey('avatar_url'));
+      check(encoded(const JsonNullable(null)))
+        ..containsKey('avatar_url')
+        ..['avatar_url'].isNull();
+      check(encoded(const JsonNullable('/foo.png')))['avatar_url']
+        .equals('/foo.png');
+    });
+
     test('is_system_bot', () {
       check(mkUser({}).isSystemBot).isFalse();
       check(mkUser({'is_system_bot': true}).isSystemBot).isTrue();

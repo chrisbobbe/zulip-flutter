@@ -74,8 +74,10 @@ class AvatarImage extends StatelessWidget {
     }
 
     Uri? resolvedUrl;
-    if (user.avatarUrl != null) {
-      resolvedUrl = store.tryResolveUrl(user.avatarUrl!);
+    // TODO(#255) handle the server saying null, meaning a Gravatar to compute
+    final rawUrl = user.avatarUrl?.value;
+    if (rawUrl != null) {
+      resolvedUrl = store.tryResolveUrl(rawUrl);
       if (resolvedUrl == null) { // TODO(log)
         return _AvatarPlaceholder(size: size);
       }
