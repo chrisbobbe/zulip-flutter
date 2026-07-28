@@ -53,6 +53,12 @@ if ! { [ .dart_tool/package_config.json -nt pubspec.yaml ] \
         echo "cloud-session-start: \`flutter pub get\` failed; see above."
         exit 0
     fi
+    # When the deps were already resolved, `pub get` leaves
+    # package_config.json untouched, its mtime still that of the
+    # environment cache -- older than the session's fresh checkout
+    # of pubspec.{yaml,lock}.  Mark the resolution fresh ourselves,
+    # so the check above can ever succeed.
+    touch .dart_tool/package_config.json
 fi
 
 # One line so that success is distinguishable from not running at all.
