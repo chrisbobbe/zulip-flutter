@@ -802,10 +802,14 @@ void main() {
       connection = store.connection as FakeApiConnection;
     }
 
-    Future<void> preparePoll({int? lastEventId}) async {
+    Future<void> preparePoll({
+      int? lastEventId,
+      int? eventQueueLongpollTimeoutSeconds,
+    }) async {
       globalStore = eg.globalStore();
       await globalStore.add(eg.selfAccount, eg.initialSnapshot(
-        lastEventId: lastEventId));
+        lastEventId: lastEventId,
+        eventQueueLongpollTimeoutSeconds: eventQueueLongpollTimeoutSeconds));
       await globalStore.perAccount(eg.selfAccount.id);
       updateFromGlobalStore();
       updateMachine.debugPauseLoop();
@@ -862,6 +866,30 @@ void main() {
       async.elapse(Duration.zero);
       check(store.userSettings.twentyFourHourTime)
         .equals(TwentyFourHourTimeMode.twentyFourHour);
+    }));
+
+    test('retries when request outlives the server-recommended timeout', () => awaitFakeAsync((async) async {
+      await preparePoll(lastEventId: 1, eventQueueLongpollTimeoutSeconds: 90);
+      check(async.pendingTimers).length.equals(0);
+
+      // The server doesn't respond within the timeout it recommended.
+      // (In the wild this is a connection that died without an error;
+      // see #514.)
+      connection.prepare(delay: const Duration(seconds: 300),
+        json: GetEventsResult(events: [], queueId: null).toJson());
+      updateMachine.debugAdvanceLoop();
+      async.elapse(const Duration(seconds: 90));
+      checkLastRequest(lastEventId: 1, expectDontBlock: false);
+      check(store).isRecoveringEventStream.isTrue();
+
+      // Polling resumes, and picks up where it left off.
+      connection.prepare(json: GetEventsResult(events: [
+        HeartbeatEvent(id: 2),
+      ], queueId: null).toJson());
+      updateMachine.debugAdvanceLoop();
+      async.flushTimers();
+      check(updateMachine.lastEventId).equals(2);
+      check(store).isRecoveringEventStream.isFalse();
     }));
 
     void checkReload(FutureOr<void> Function() prepareError, {

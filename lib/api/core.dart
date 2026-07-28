@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -150,10 +151,18 @@ class ApiConnection {
 
   bool _isOpen = true;
 
+  /// Send the request, and parse the response.
+  ///
+  /// If [timeout] is non-null and the server doesn't begin responding
+  /// within it, the request is abandoned and this throws a
+  /// [NetworkException] with kind [NetworkExceptionKind.connectionFailed].
+  /// The timeout covers only waiting for the response to start;
+  /// once it does, downloading the body is not separately bounded.
   Future<T> send<T>(String routeName, T Function(Map<String, dynamic>) fromJson,
     http.BaseRequest request, {
     bool useAuth = true,
     String? overrideUserAgent,
+    Duration? timeout,
   }) async {
     assert(_isOpen);
 
@@ -177,7 +186,10 @@ class ApiConnection {
 
     final http.StreamedResponse response;
     try {
-      response = await _client.send(request);
+      final responseFuture = _client.send(request);
+      response = timeout == null
+        ? await responseFuture
+        : await responseFuture.timeout(timeout);
     } catch (e) {
       final String message;
       if (e is http.ClientException) {
@@ -225,11 +237,11 @@ class ApiConnection {
   }
 
   Future<T> get<T>(String routeName, T Function(Map<String, dynamic>) fromJson,
-      String path, Map<String, dynamic>? params) async {
+      String path, Map<String, dynamic>? params, {Duration? timeout}) async {
     final url = realmUrl.replace(
       path: "/api/v1/$path", queryParameters: encodeParameters(params));
     final request = http.Request('GET', url);
-    return send(routeName, fromJson, request);
+    return send(routeName, fromJson, request, timeout: timeout);
   }
 
   Future<T> post<T>(String routeName, T Function(Map<String, dynamic>) fromJson,
@@ -288,8 +300,11 @@ class ApiConnection {
 /// these conditions with different exception types, is accommodated here.
 NetworkExceptionKind _networkExceptionKind(Object cause) {
   return switch (cause) {
-    SocketException() => NetworkExceptionKind.connectionFailed,
-    _                 => NetworkExceptionKind.other,
+    SocketException()  => NetworkExceptionKind.connectionFailed,
+    // A timeout means we gave up waiting for a response that the server
+    // should already have sent; so the connection is effectively dead.
+    TimeoutException() => NetworkExceptionKind.connectionFailed,
+    _                  => NetworkExceptionKind.other,
   };
 }
 

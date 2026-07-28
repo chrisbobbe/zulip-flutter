@@ -131,6 +131,15 @@ class InitialSnapshot {
 
   final Uri serverEmojiDataUrl;
 
+  /// The timeout the server recommends we use for [getEvents] requests,
+  /// in seconds.
+  ///
+  /// The server guarantees this exceeds the interval at which it sends
+  /// heartbeat events; so if a request takes longer than this, the request
+  /// or its response must have been lost.
+  /// See <https://zulip.com/api/get-events>.
+  final int eventQueueLongpollTimeoutSeconds;
+
   final int? realmModerationRequestChannelId; // TODO(server-10)
 
   final String? realmEmptyTopicDisplayName; // TODO(server-10)
@@ -216,6 +225,7 @@ class InitialSnapshot {
     required this.maxFileUploadSizeMib,
     required this.serverThumbnailFormats,
     required this.serverEmojiDataUrl,
+    required this.eventQueueLongpollTimeoutSeconds,
     required this.realmModerationRequestChannelId,
     required this.realmEmptyTopicDisplayName,
     required this.realmUsers,
