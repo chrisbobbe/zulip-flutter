@@ -29,6 +29,24 @@ void main() {
       final store = eg.store();
       check(store.userDisplayName(eg.user().userId)).equals('(unknown user)');
     });
+
+    test('on an unknown user who sent a message we know', () async {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      await store.addMessage(eg.streamMessage(sender: sender));
+      check(store.getUser(sender.userId)).isNull();
+      check(store.userDisplayName(sender.userId)).equals('Some User');
+    });
+
+    test('on a muted user, even one who sent a message we know', () async {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      await store.addMessage(eg.streamMessage(sender: sender));
+      await store.setMutedUsers([sender.userId]);
+      check(store.userDisplayName(sender.userId)).equals('Muted user');
+      check(store.userDisplayName(sender.userId, replaceIfMuted: false))
+        .equals('Some User');
+    });
   });
 
   group('senderDisplayName', () {
@@ -53,11 +71,51 @@ void main() {
       final message = eg.streamMessage(sender: eg.user(fullName: 'Some User'));
       await store.addMessage(message);
       // If the user is unknown, `store.senderDisplayName` should fall back
-      // to the name in the message...
+      // to the name in the message.
       check(store.senderDisplayName(message)).equals('Some User');
-      // ... even though `store.userDisplayName` (with no message available
-      // for fallback) only has a generic fallback name.
-      check(store.userDisplayName(message.senderId)).equals('(unknown user)');
+    });
+  });
+
+  group('nameFromMessages', () {
+    test('learn from a message event', () async {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      await store.addMessage(eg.streamMessage(sender: sender));
+      check(store.nameFromMessages(sender.userId)).equals('Some User');
+    });
+
+    test('learn from fetched messages', () {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      store.reconcileMessages([eg.streamMessage(sender: sender)]);
+      check(store.nameFromMessages(sender.userId)).equals('Some User');
+    });
+
+    test('no learn for a known user', () async {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      await store.addUser(sender);
+      await store.addMessage(eg.streamMessage(sender: sender));
+      check(store.nameFromMessages(sender.userId)).isNull();
+    });
+
+    test('drop learned name when the user becomes known', () async {
+      final store = eg.store();
+      final sender = eg.user(fullName: 'Some User');
+      await store.addMessage(eg.streamMessage(sender: sender));
+      check(store.nameFromMessages(sender.userId)).equals('Some User');
+      await store.addUser(sender);
+      check(store.nameFromMessages(sender.userId)).isNull();
+    });
+
+    test('no notify listeners when a name is learned', () async {
+      // Learning a name happens on every message; see [handleMessages].
+      final store = eg.store();
+      int notifiedCount = 0;
+      store.addListener(() => notifiedCount++);
+      await store.addMessage(eg.streamMessage(sender: eg.user()));
+      store.reconcileMessages([eg.streamMessage(sender: eg.user())]);
+      check(notifiedCount).equals(0);
     });
   });
 

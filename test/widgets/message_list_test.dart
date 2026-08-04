@@ -2055,12 +2055,15 @@ void main() {
         final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
         await setupMessageListPage(tester, messages: [
           eg.dmMessage(from: eg.otherUser, to: [eg.selfUser]),
-          eg.dmMessage(from: eg.thirdUser, to: [eg.selfUser, eg.otherUser]),
+          eg.dmMessage(from: eg.thirdUser, to: [eg.selfUser, eg.fourthUser]),
         ]);
         await store.addUser(eg.thirdUser);
         await tester.pump();
+        // A user unknown to the store, but who sent one of these messages,
+        // is named by that message.
         tester.widget(find.text(zulipLocalizations.messageListGroupYouAndOthers(
-          zulipLocalizations.unknownUserName)));
+          eg.otherUser.fullName)));
+        // A user we know nothing about has no name to show.
         tester.widget(find.text(zulipLocalizations.messageListGroupYouAndOthers(
           "${zulipLocalizations.unknownUserName}, ${eg.thirdUser.fullName}")));
       });
@@ -2088,7 +2091,7 @@ void main() {
         await tester.pump();
         final textSpan = tester.renderObject<RenderParagraph>(find.text(
           zulipLocalizations.messageListGroupYouAndOthers(
-            zulipLocalizations.unknownUserName))).text;
+            eg.otherUser.fullName))).text;
         final icon = tester.widget<Icon>(find.byIcon(ZulipIcons.two_person));
         check(textSpan).style.isNotNull().color.isNotNull().isSameColorAs(icon.color!);
       });

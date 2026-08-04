@@ -59,17 +59,29 @@ mixin UserStore on PerAccountStoreBase, RealmStore {
   /// this is [ZulipLocalizations.mutedUser].
   ///
   /// Otherwise this is the user's [User.fullName] if the user is known,
-  /// or (if unknown) [ZulipLocalizations.unknownUserName].
-  ///
-  /// When a [Message] is available which the user sent,
-  /// use [senderDisplayName] instead for a better-informed fallback.
+  /// else a name learned from a message the user sent if we have one
+  /// (see [nameFromMessages]),
+  /// else [ZulipLocalizations.unknownUserName].
   String userDisplayName(int userId, {bool replaceIfMuted = true}) {
     if (replaceIfMuted && isUserMuted(userId)) {
       return GlobalLocalizations.zulipLocalizations.mutedUser;
     }
     return getUser(userId)?.fullName
+      ?? nameFromMessages(userId)
       ?? GlobalLocalizations.zulipLocalizations.unknownUserName;
   }
+
+  /// The name of the given user as seen on a message they sent,
+  /// for a user absent from [getUser]; else null.
+  ///
+  /// Messages carry their sender's name, so for a user we don't otherwise
+  /// know about — see [getUser] for how that happens — this gives a real
+  /// name to show instead of [ZulipLocalizations.unknownUserName].
+  /// The name is a snapshot as of when the server sent the message,
+  /// so it won't live-update; prefer [User.fullName] where there is one.
+  ///
+  /// Generally use [userDisplayName] instead of this.
+  String? nameFromMessages(int userId);
 
   /// The name to show for the given message's sender in the UI.
   ///
@@ -146,6 +158,9 @@ mixin ProxyUserStore on UserStore {
   Iterable<User> get allUsers => userStore.allUsers;
 
   @override
+  String? nameFromMessages(int userId) => userStore.nameFromMessages(userId);
+
+  @override
   bool isUserMuted(int userId, {MutedUsersEvent? event}) =>
     userStore.isUserMuted(userId, event: event);
 
@@ -206,6 +221,28 @@ class UserStoreImpl extends HasRealmStore with UserStore {
   @override
   Iterable<User> get allUsers => _users.values;
 
+  /// Names of users absent from [_users], from messages they sent.
+  ///
+  /// An entry is dropped when the user turns up in [_users].
+  final Map<int, String> _namesFromMessages = {};
+
+  @override
+  String? nameFromMessages(int userId) => _namesFromMessages[userId];
+
+  /// Learn the senders' names from these messages, for senders we don't know.
+  ///
+  /// This doesn't notify listeners: it happens on every message the app
+  /// receives or fetches, and a name learned here is only a fallback
+  /// for [userDisplayName].  Anything showing a message from the sender
+  /// rebuilds anyway, from its message list; elsewhere the new name
+  /// appears at the next rebuild.
+  void handleMessages(Iterable<Message> messages) {
+    for (final message in messages) {
+      if (_users.containsKey(message.senderId)) continue;
+      _namesFromMessages[message.senderId] = message.senderFullName;
+    }
+  }
+
   final Set<int> _mutedUsers;
 
   @override
@@ -245,6 +282,7 @@ class UserStoreImpl extends HasRealmStore with UserStore {
     switch (event) {
       case RealmUserAddEvent():
         _users[event.person.userId] = event.person;
+        _namesFromMessages.remove(event.person.userId);
 
       case RealmUserRemoveEvent():
         _users.remove(event.userId);
