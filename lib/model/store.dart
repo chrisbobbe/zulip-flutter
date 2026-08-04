@@ -838,6 +838,7 @@ class PerAccountStore extends PerAccountStoreBase with
   /// as needed for search, before this is called.
   void reconcileMessages(List<Message> messages) {
     _messages.reconcileMessages(messages);
+    _users.handleMessages(messages);
     // TODO(#649) notify [unreads] of the just-fetched messages
     // TODO(#650) notify [recentDmConversationsView] of the just-fetched messages
   }
@@ -1014,6 +1015,7 @@ class PerAccountStore extends PerAccountStoreBase with
         assert(event.message.matchContent == null);
         assert(event.message.matchTopic == null);
 
+        _users.handleMessages([event.message]);
         _messages.handleMessageEvent(event);
         unreads.handleMessageEvent(event);
         recentDmConversationsView.handleMessageEvent(event);
