@@ -29,12 +29,18 @@ void main() {
       matching: find.byIcon(ZulipIcons.person),
     );
 
-    Future<Uri?> actualUrl(WidgetTester tester, String? avatarUrl, [double? size]) async {
+    /// The URL [AvatarImage] uses for a user whose [User.avatarUrl] is [avatarUrl].
+    ///
+    /// Pass false for [userKnown] to leave the user out of the store.
+    Future<Uri?> actualUrl(WidgetTester tester, String? avatarUrl, {
+      double? size,
+      bool userKnown = true,
+    }) async {
       addTearDown(testBinding.reset);
       await testBinding.globalStore.add(eg.selfAccount, eg.initialSnapshot());
       store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
       user = eg.user(avatarUrl: avatarUrl);
-      await store.addUser(user);
+      if (userKnown) await store.addUser(user);
 
       prepareBoringImageHttpClient();
       await tester.pumpWidget(
@@ -67,7 +73,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       const avatarUrl = 'https://example/avatar.png';
-      check(await actualUrl(tester, avatarUrl, 50)).isNotNull()
+      check(await actualUrl(tester, avatarUrl, size: 50)).isNotNull()
         .asString.equals(avatarUrl.replaceAll('.png', '-medium.png'));
       debugNetworkImageHttpClientProvider = null;
     });
@@ -77,7 +83,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
 
       const avatarUrl = '/avatar.png';
-      check(await actualUrl(tester, avatarUrl, 50))
+      check(await actualUrl(tester, avatarUrl, size: 50))
         .equals(store.tryResolveUrl('/avatar-medium.png')!);
       debugNetworkImageHttpClientProvider = null;
     });
@@ -88,19 +94,10 @@ void main() {
       debugNetworkImageHttpClientProvider = null;
     });
 
-    testWidgets('shows placeholder when user is not found', (tester) async {
-      addTearDown(testBinding.reset);
-      await testBinding.globalStore.add(eg.selfAccount, eg.initialSnapshot());
-      final store = await testBinding.globalStore.perAccount(eg.selfAccount.id);
-
-      const nonExistentUserId = 9999999;
-      check(store.getUser(nonExistentUserId)).isNull();
-
-      await tester.pumpWidget(
-        TestZulipApp(accountId: eg.selfAccount.id,
-          child: AvatarImage(userId: nonExistentUserId, size: 30)));
-      await tester.pump();
-      check(findPlaceholder).findsOne();
+    testWidgets('fallback URL when user is unknown', (tester) async {
+      check(await actualUrl(tester, null, userKnown: false))
+        .equals(store.realmUrl.resolve('/avatar/${user.userId}'));
+      debugNetworkImageHttpClientProvider = null;
     });
 
     testWidgets('fallback URL when avatarUrl is missing', (tester) async {
@@ -113,7 +110,7 @@ void main() {
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      check(await actualUrl(tester, null, 50))
+      check(await actualUrl(tester, null, size: 50))
         .equals(store.realmUrl.resolve('/avatar/${user.userId}/medium'));
       debugNetworkImageHttpClientProvider = null;
     });

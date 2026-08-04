@@ -45,7 +45,8 @@ class Avatar extends StatelessWidget {
 
 /// The appropriate avatar image for a user ID.
 ///
-/// If the user isn't found, gives a [SizedBox.shrink].
+/// This works even for a user the app has no data on,
+/// giving the avatar the server serves for that user ID.
 ///
 /// Wrap this with [AvatarShape].
 class AvatarImage extends StatelessWidget {
@@ -63,19 +64,19 @@ class AvatarImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = PerAccountStoreWidget.of(context);
-    final user = store.getUser(userId);
-
-    if (user == null) { // TODO(log)
-      return _AvatarPlaceholder(size: size);
-    }
 
     if (replaceIfMuted && store.isUserMuted(userId)) {
       return _AvatarPlaceholder(size: size);
     }
 
+    // For a user we don't know about, this is null, just as it is for a user
+    // whose `avatar_url` the server omitted.  Either way [AvatarUrl] falls
+    // back to the /avatar/{user_id} endpoint, which serves any user ID.
+    final rawUrl = store.getUser(userId)?.avatarUrl;
+
     Uri? resolvedUrl;
-    if (user.avatarUrl != null) {
-      resolvedUrl = store.tryResolveUrl(user.avatarUrl!);
+    if (rawUrl != null) {
+      resolvedUrl = store.tryResolveUrl(rawUrl);
       if (resolvedUrl == null) { // TODO(log)
         return _AvatarPlaceholder(size: size);
       }
