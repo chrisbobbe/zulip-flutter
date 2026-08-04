@@ -369,8 +369,10 @@ void main() {
       prepareBoringImageHttpClient();
       await setupPage(tester, thumbnailUrl: null);
 
-      final image = tester.widget<RealmContentNetworkImage>(
-        find.byType(RealmContentNetworkImage));
+      // Scope to the image itself; the app bar has the sender's avatar.
+      final image = tester.widget<RealmContentNetworkImage>(find.descendant(
+        of: find.byType(InteractiveViewer),
+        matching: find.byType(RealmContentNetworkImage)));
       check(image.src).equals(src);
 
       debugNetworkImageHttpClientProvider = null;

@@ -12,8 +12,10 @@ abstract class AvatarUrl {
   /// The right [AvatarUrl] subclass for the given user data.
   ///
   /// [resolvedUrl] is the user's `avatar_url` resolved against the realm URL,
-  /// or null if the server omitted the field; see `user_avatar_url_field_optional`
-  /// at https://zulip.com/api/register-queue#parameter-client_capabilities .
+  /// or null if we have no URL for the user: either the server omitted the
+  /// field (see `user_avatar_url_field_optional` at
+  /// https://zulip.com/api/register-queue#parameter-client_capabilities ),
+  /// or we have no data on the user at all.
   factory AvatarUrl.fromUserData({
     required Uri? resolvedUrl,
     required int userId,
@@ -49,12 +51,14 @@ class GravatarUrl implements AvatarUrl {
 }
 
 /// The fallback avatar URL, `/avatar/{user_id}` on the realm,
-/// for a user whose `avatar_url` field the server omitted.
+/// for a user we have no `avatar_url` for.
 ///
 /// The server may omit the field at its discretion
 /// when we pass true for `user_avatar_url_field_optional`
 /// in the register request:
 ///   https://zulip.com/api/register-queue#parameter-client_capabilities
+/// This is also the URL to use for a user the app has no data on at all;
+/// the endpoint serves any user ID in the realm.
 /// The fallback endpoint redirects to the user's actual avatar.
 /// Its API documentation is pending, in an unmerged PR
 /// (as of 2026-07-10):
