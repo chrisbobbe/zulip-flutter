@@ -717,6 +717,32 @@ void main() {
             }]),
           });
       });
+
+      testWidgets('pin request fails', (tester) async {
+        await prepare();
+        final narrow = ChannelNarrow(someChannel.streamId);
+        await showFromMsglistAppBar(tester, narrow: narrow);
+
+        connection.prepare(apiException: eg.apiBadRequest(message: 'oops'));
+        await tapButton(tester, 'Pin to top');
+        await tester.pump(Duration.zero);
+        checkErrorDialog(tester,
+          expectedTitle: 'Failed to pin channel', expectedMessage: 'oops');
+      });
+
+      testWidgets('unpin request fails', (tester) async {
+        await prepare();
+        await store.removeSubscription(someChannel.streamId);
+        await store.addSubscription(eg.subscription(someChannel, pinToTop: true));
+        final narrow = ChannelNarrow(someChannel.streamId);
+        await showFromMsglistAppBar(tester, narrow: narrow);
+
+        connection.prepare(apiException: eg.apiBadRequest(message: 'oops'));
+        await tapButton(tester, 'Unpin from top');
+        await tester.pump(Duration.zero);
+        checkErrorDialog(tester,
+          expectedTitle: 'Failed to unpin channel', expectedMessage: 'oops');
+      });
     });
 
     group('UnsubscribeButton', () {
