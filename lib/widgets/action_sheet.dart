@@ -534,6 +534,9 @@ void showChannelActionSheet(BuildContext context, {
       if (isSubscribed)
         PinUnpinButton(pageContext: pageContext, channelId: channelId,
           isPinned: channel.pinToTop),
+      if (isSubscribed)
+        MuteUnmuteChannelButton(pageContext: pageContext, channelId: channelId,
+          isMuted: channel.isMuted),
       // (It's harmless that this section can be empty; in that case
       // it ends up rendering to nothing.)
     ],
@@ -708,6 +711,36 @@ class PinUnpinButton extends ActionSheetMenuItemButton {
       channelId: channelId,
       property: .pinToTop,
       value: !isPinned);
+  }
+}
+
+class MuteUnmuteChannelButton extends ActionSheetMenuItemButton {
+  const MuteUnmuteChannelButton({
+    super.key,
+    required this.channelId,
+    required this.isMuted,
+    required super.pageContext,
+  });
+
+  final int channelId;
+  final bool isMuted;
+
+  @override
+  IconData get icon => isMuted ? ZulipIcons.unmute : ZulipIcons.mute;
+
+  @override
+  String label(ZulipLocalizations zulipLocalizations) {
+    return isMuted
+      ? zulipLocalizations.actionSheetOptionUnmuteChannel
+      : zulipLocalizations.actionSheetOptionMuteChannel;
+  }
+
+  @override
+  void onPressed() async {
+    await ZulipAction.updateSubscriptionSettings(pageContext,
+      channelId: channelId,
+      property: .isMuted,
+      value: !isMuted);
   }
 }
 

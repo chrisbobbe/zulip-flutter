@@ -719,6 +719,87 @@ void main() {
       });
     });
 
+    group('MuteUnmuteChannelButton', () {
+      Future<void> tapButton(WidgetTester tester, String label) async {
+        await tester.ensureVisible(findButtonForLabel(label));
+        await tester.tap(findButtonForLabel(label));
+        await tester.pump(); // [MenuItemButton.onPressed] called in a post-frame callback: flutter/flutter@e4a39fa2e
+      }
+
+      testWidgets('channel subscribed, not muted', (tester) async {
+        await prepare();
+        final narrow = ChannelNarrow(someChannel.streamId);
+        check(store.subscriptions[narrow.channelId]).isNotNull()
+          .isMuted.isFalse();
+        await showFromMsglistAppBar(tester, narrow: narrow);
+        checkButton('Mute channel');
+        checkNoButton('Unmute channel');
+      });
+
+      testWidgets('channel subscribed, muted', (tester) async {
+        await prepare();
+        await store.removeSubscription(someChannel.streamId);
+        await store.addSubscription(eg.subscription(someChannel, isMuted: true));
+        final narrow = ChannelNarrow(someChannel.streamId);
+        check(store.subscriptions[narrow.channelId]).isNotNull()
+          .isMuted.isTrue();
+        await showFromMsglistAppBar(tester, narrow: narrow);
+        checkNoButton('Mute channel');
+        checkButton('Unmute channel');
+      });
+
+      testWidgets('channel not subscribed', (tester) async {
+        await prepare();
+        final narrow = ChannelNarrow(someChannel.streamId);
+        await store.removeSubscription(narrow.channelId);
+        await showFromMsglistAppBar(tester, narrow: narrow);
+        checkNoButton('Mute channel');
+        checkNoButton('Unmute channel');
+      });
+
+      testWidgets('smoke: mute', (tester) async {
+        await prepare();
+        final narrow = ChannelNarrow(someChannel.streamId);
+        await showFromMsglistAppBar(tester, narrow: narrow);
+
+        connection.prepare(json: {});
+        await tapButton(tester, 'Mute channel');
+        await tester.pump(Duration.zero);
+        check(connection.lastRequest).isA<http.Request>()
+          ..method.equals('POST')
+          ..url.path.equals('/api/v1/users/me/subscriptions/properties')
+          ..bodyFields.deepEquals({
+            'subscription_data': jsonEncode([{
+              'stream_id': someChannel.streamId,
+              'property': 'is_muted',
+              'value': true,
+            }]),
+          });
+      });
+
+      testWidgets('smoke: unmute', (tester) async {
+        await prepare();
+        await store.removeSubscription(someChannel.streamId);
+        await store.addSubscription(eg.subscription(someChannel, isMuted: true));
+        final narrow = ChannelNarrow(someChannel.streamId);
+        await showFromMsglistAppBar(tester, narrow: narrow);
+
+        connection.prepare(json: {});
+        await tapButton(tester, 'Unmute channel');
+        await tester.pump(Duration.zero);
+        check(connection.lastRequest).isA<http.Request>()
+          ..method.equals('POST')
+          ..url.path.equals('/api/v1/users/me/subscriptions/properties')
+          ..bodyFields.deepEquals({
+            'subscription_data': jsonEncode([{
+              'stream_id': someChannel.streamId,
+              'property': 'is_muted',
+              'value': false,
+            }]),
+          });
+      });
+    });
+
     group('UnsubscribeButton', () {
       Future<void> tapButton(WidgetTester tester) async {
         await tester.ensureVisible(findButtonForLabel('Unsubscribe'));

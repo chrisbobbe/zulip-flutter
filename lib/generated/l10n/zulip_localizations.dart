@@ -394,6 +394,18 @@ abstract class ZulipLocalizations {
   /// **'Pin to top'**
   String get actionSheetOptionPinChannel;
 
+  /// Label in the channel action sheet for muting the channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute channel'**
+  String get actionSheetOptionMuteChannel;
+
+  /// Label in the channel action sheet for unmuting the channel.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute channel'**
+  String get actionSheetOptionUnmuteChannel;
+
   /// Label in the channel action sheet for unpinning the channel.
   ///
   /// In en, this message translates to:

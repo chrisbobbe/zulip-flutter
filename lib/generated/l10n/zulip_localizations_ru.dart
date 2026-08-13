@@ -144,6 +144,12 @@ class ZulipLocalizationsRu extends ZulipLocalizations {
   String get actionSheetOptionPinChannel => 'Закрепить';
 
   @override
+  String get actionSheetOptionMuteChannel => 'Mute channel';
+
+  @override
+  String get actionSheetOptionUnmuteChannel => 'Unmute channel';
+
+  @override
   String get actionSheetOptionUnpinChannel => 'Открепить';
 
   @override

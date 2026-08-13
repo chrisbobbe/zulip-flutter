@@ -145,6 +145,12 @@ class ZulipLocalizationsEt extends ZulipLocalizations {
   String get actionSheetOptionPinChannel => 'Tõsta ülal ääres esile';
 
   @override
+  String get actionSheetOptionMuteChannel => 'Mute channel';
+
+  @override
+  String get actionSheetOptionUnmuteChannel => 'Unmute channel';
+
+  @override
   String get actionSheetOptionUnpinChannel =>
       'Eemalda ülalt äärest esiletõstmine';
 

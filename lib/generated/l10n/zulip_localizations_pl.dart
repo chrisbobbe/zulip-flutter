@@ -144,6 +144,12 @@ class ZulipLocalizationsPl extends ZulipLocalizations {
   String get actionSheetOptionPinChannel => 'Przypnij na górze';
 
   @override
+  String get actionSheetOptionMuteChannel => 'Mute channel';
+
+  @override
+  String get actionSheetOptionUnmuteChannel => 'Unmute channel';
+
+  @override
   String get actionSheetOptionUnpinChannel => 'Odepnij z góry';
 
   @override

@@ -141,6 +141,12 @@ class ZulipLocalizationsJa extends ZulipLocalizations {
   String get actionSheetOptionPinChannel => '上部に固定';
 
   @override
+  String get actionSheetOptionMuteChannel => 'Mute channel';
+
+  @override
+  String get actionSheetOptionUnmuteChannel => 'Unmute channel';
+
+  @override
   String get actionSheetOptionUnpinChannel => '上部に固定を解除';
 
   @override

@@ -163,6 +163,14 @@
   "@actionSheetOptionPinChannel": {
     "description": "Label in the channel action sheet for pinning the channel."
   },
+  "actionSheetOptionMuteChannel": "Mute channel",
+  "@actionSheetOptionMuteChannel": {
+    "description": "Label in the channel action sheet for muting the channel."
+  },
+  "actionSheetOptionUnmuteChannel": "Unmute channel",
+  "@actionSheetOptionUnmuteChannel": {
+    "description": "Label in the channel action sheet for unmuting the channel."
+  },
   "actionSheetOptionUnpinChannel": "Unpin from top",
   "@actionSheetOptionUnpinChannel": {
     "description": "Label in the channel action sheet for unpinning the channel."

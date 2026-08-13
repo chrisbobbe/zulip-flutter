@@ -61,6 +61,7 @@ extension ZulipStreamChecks on Subject<ZulipStream> {
 
 extension SubscriptionChecks on Subject<Subscription> {
   Subject<bool> get pinToTop => has((x) => x.pinToTop, 'pinToTop');
+  Subject<bool> get isMuted => has((x) => x.isMuted, 'isMuted');
 }
 
 extension ChannelFolderChecks on Subject<ChannelFolder> {

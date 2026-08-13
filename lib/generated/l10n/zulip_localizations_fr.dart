@@ -144,6 +144,12 @@ class ZulipLocalizationsFr extends ZulipLocalizations {
   String get actionSheetOptionPinChannel => 'Épingler en haut';
 
   @override
+  String get actionSheetOptionMuteChannel => 'Mute channel';
+
+  @override
+  String get actionSheetOptionUnmuteChannel => 'Unmute channel';
+
+  @override
   String get actionSheetOptionUnpinChannel => 'Désépingler du haut';
 
   @override
