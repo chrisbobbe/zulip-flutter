@@ -64,6 +64,13 @@ sealed class Event {
           case 'remove': return SavedSnippetsRemoveEvent.fromJson(json);
           default: return UnexpectedEvent.fromJson(json);
         }
+      case 'drafts':
+        switch (json['op'] as String) {
+          case 'add': return DraftsAddEvent.fromJson(json);
+          case 'update': return DraftsUpdateEvent.fromJson(json);
+          case 'remove': return DraftsRemoveEvent.fromJson(json);
+          default: return UnexpectedEvent.fromJson(json);
+        }
       case 'stream':
         switch (json['op'] as String) {
           case 'create': return ChannelCreateEvent.fromJson(json);
@@ -744,6 +751,68 @@ class SavedSnippetsRemoveEvent extends SavedSnippetsEvent {
 
   @override
   Map<String, dynamic> toJson() => _$SavedSnippetsRemoveEventToJson(this);
+}
+
+/// A Zulip event of type `drafts`: https://zulip.com/api/get-events#drafts-add
+sealed class DraftsEvent extends Event {
+  @override
+  @JsonKey(includeToJson: true)
+  String get type => 'drafts';
+
+  String get op;
+
+  DraftsEvent({required super.id});
+}
+
+/// A [DraftsEvent] with op `add`: https://zulip.com/api/get-events#drafts-add
+@JsonSerializable(fieldRename: FieldRename.snake)
+class DraftsAddEvent extends DraftsEvent {
+  @override
+  String get op => 'add';
+
+  final List<Draft> drafts;
+
+  DraftsAddEvent({required super.id, required this.drafts});
+
+  factory DraftsAddEvent.fromJson(Map<String, dynamic> json) =>
+    _$DraftsAddEventFromJson(json);
+
+  @override
+  Map<String, dynamic> toJson() => _$DraftsAddEventToJson(this);
+}
+
+/// A [DraftsEvent] with op `update`: https://zulip.com/api/get-events#drafts-update
+@JsonSerializable(fieldRename: FieldRename.snake)
+class DraftsUpdateEvent extends DraftsEvent {
+  @override
+  String get op => 'update';
+
+  final Draft draft;
+
+  DraftsUpdateEvent({required super.id, required this.draft});
+
+  factory DraftsUpdateEvent.fromJson(Map<String, dynamic> json) =>
+    _$DraftsUpdateEventFromJson(json);
+
+  @override
+  Map<String, dynamic> toJson() => _$DraftsUpdateEventToJson(this);
+}
+
+/// A [DraftsEvent] with op `remove`: https://zulip.com/api/get-events#drafts-remove
+@JsonSerializable(fieldRename: FieldRename.snake)
+class DraftsRemoveEvent extends DraftsEvent {
+  @override
+  String get op => 'remove';
+
+  final int draftId;
+
+  DraftsRemoveEvent({required super.id, required this.draftId});
+
+  factory DraftsRemoveEvent.fromJson(Map<String, dynamic> json) =>
+    _$DraftsRemoveEventFromJson(json);
+
+  @override
+  Map<String, dynamic> toJson() => _$DraftsRemoveEventToJson(this);
 }
 
 /// A Zulip event of type `stream`.

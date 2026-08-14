@@ -86,6 +86,31 @@ void main() {
     });
   });
 
+  group('drafts', () {
+    test('add', () {
+      check(Event.fromJson({'id': 1, 'type': 'drafts', 'op': 'add',
+        'drafts': [eg.draft(id: 17).toJson(), eg.draft(id: 18).toJson()]}))
+        .isA<DraftsAddEvent>().drafts.deepEquals(<Condition<Object?>>[
+          (it) => it.isA<Draft>().id.equals(17),
+          (it) => it.isA<Draft>().id.equals(18),
+        ]);
+    });
+
+    test('update', () {
+      check(Event.fromJson({'id': 1, 'type': 'drafts', 'op': 'update',
+        'draft': eg.draft(id: 17, content: 'edited').toJson()}))
+        .isA<DraftsUpdateEvent>().draft
+          ..id.equals(17)
+          ..content.equals('edited');
+    });
+
+    test('remove', () {
+      check(Event.fromJson({'id': 1, 'type': 'drafts', 'op': 'remove',
+        'draft_id': 17}))
+        .isA<DraftsRemoveEvent>().draftId.equals(17);
+    });
+  });
+
   test('subscription/remove: deserialize stream_ids correctly', () {
     check(Event.fromJson({
       'id': 1,
