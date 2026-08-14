@@ -254,6 +254,38 @@ Map<String, dynamic> _$SavedSnippetToJson(SavedSnippet instance) =>
       'date_created': instance.dateCreated,
     };
 
+Draft _$DraftFromJson(Map<String, dynamic> json) => Draft(
+  id: (json['id'] as num).toInt(),
+  type: $enumDecode(_$DraftTypeEnumMap, json['type']),
+  to: (json['to'] as List<dynamic>).map((e) => (e as num).toInt()).toList(),
+  topic: TopicName.fromJson(json['topic'] as String),
+  content: json['content'] as String,
+  timestamp: (json['timestamp'] as num).toInt(),
+);
+
+Map<String, dynamic> _$DraftToJson(Draft instance) => <String, dynamic>{
+  'id': instance.id,
+  'type': instance.type,
+  'to': instance.to,
+  'topic': instance.topic,
+  'content': instance.content,
+  'timestamp': instance.timestamp,
+};
+
+const _$DraftTypeEnumMap = {
+  DraftType.unaddressed: '',
+  DraftType.channel: 'stream',
+  DraftType.dm: 'private',
+};
+
+Map<String, dynamic> _$DraftDataToJson(DraftData instance) => <String, dynamic>{
+  'type': instance.type,
+  'to': instance.to,
+  'topic': instance.topic,
+  'content': instance.content,
+  'timestamp': ?instance.timestamp,
+};
+
 ZulipStream _$ZulipStreamFromJson(Map<String, dynamic> json) => ZulipStream(
   streamId: (json['stream_id'] as num).toInt(),
   name: json['name'] as String,

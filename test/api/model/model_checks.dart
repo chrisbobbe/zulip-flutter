@@ -19,6 +19,15 @@ extension UserStatusChangeChecks on Subject<UserStatusChange> {
   Subject<Option<StatusEmoji?>> get emoji => has((x) => x.emoji, 'emoji');
 }
 
+extension DraftChecks on Subject<Draft> {
+  Subject<int> get id => has((x) => x.id, 'id');
+  Subject<DraftType> get type => has((x) => x.type, 'type');
+  Subject<List<int>> get to => has((x) => x.to, 'to');
+  Subject<TopicName> get topic => has((x) => x.topic, 'topic');
+  Subject<String> get content => has((x) => x.content, 'content');
+  Subject<int> get timestamp => has((x) => x.timestamp, 'timestamp');
+}
+
 extension UserGroupChecks on Subject<UserGroup> {
   Subject<int> get id => has((x) => x.id, 'id');
   Subject<String> get name => has((x) => x.name, 'name');

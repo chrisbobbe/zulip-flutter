@@ -488,6 +488,64 @@ SavedSnippet savedSnippet({
   );
 }
 
+int _nextDraftId() => _lastDraftId++;
+int _lastDraftId = 1;
+
+/// The default [DraftData.to] and [DraftData.topic] for a draft of [type].
+({List<int> to, TopicName topic}) _draftDestination(DraftType type) {
+  return switch (type) {
+    DraftType.unaddressed => (to: [],                   topic: const TopicName('')),
+    DraftType.channel     => (to: [stream().streamId],  topic: const TopicName('some topic')),
+    DraftType.dm          => (to: [otherUser.userId],   topic: const TopicName('')),
+  };
+}
+
+/// A draft as stored on the server.
+///
+/// Defaults to a channel draft; pass [type] for a DM or unaddressed one.
+Draft draft({
+  int? id,
+  DraftType? type,
+  List<int>? to,
+  TopicName? topic,
+  String? content,
+  int? timestamp,
+}) {
+  _checkPositive(id, 'draft ID');
+  final effectiveType = type ?? DraftType.channel;
+  final destination = _draftDestination(effectiveType);
+  return Draft(
+    id: id ?? _nextDraftId(),
+    type: effectiveType,
+    to: to ?? destination.to,
+    topic: topic ?? destination.topic,
+    content: content ?? 'draft content',
+    timestamp: timestamp ?? 1771389742,
+  );
+}
+
+/// A draft as sent to the server, by default letting the server
+/// fill in the timestamp.
+///
+/// Defaults to a channel draft; pass [type] for a DM or unaddressed one.
+DraftData draftData({
+  DraftType? type,
+  List<int>? to,
+  TopicName? topic,
+  String? content,
+  int? timestamp,
+}) {
+  final effectiveType = type ?? DraftType.channel;
+  final destination = _draftDestination(effectiveType);
+  return DraftData(
+    type: effectiveType,
+    to: to ?? destination.to,
+    topic: topic ?? destination.topic,
+    content: content ?? 'draft content',
+    timestamp: timestamp,
+  );
+}
+
 //|//////////////////////////////////////////////////////////////
 // Streams and subscriptions.
 //

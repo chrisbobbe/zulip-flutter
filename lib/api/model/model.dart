@@ -642,6 +642,111 @@ class SavedSnippet {
   Map<String, dynamic> toJson() => _$SavedSnippetToJson(this);
 }
 
+/// A draft message stored on the server,
+/// as in `drafts` from the initial snapshot.
+///
+/// For docs, see the `Draft` schema at <https://zulip.com/api/get-drafts>.
+///
+/// Different from [DraftData], this comes from the server;
+/// so it always has an [id] and a [timestamp].
+@JsonSerializable(fieldRename: FieldRename.snake)
+class Draft {
+  Draft({
+    required this.id,
+    required this.type,
+    required this.to,
+    required this.topic,
+    required this.content,
+    required this.timestamp,
+  });
+
+  final int id;
+
+  final DraftType type;
+
+  /// The tentative audience: one channel ID, or the DM recipients' user IDs.
+  ///
+  /// Empty for [DraftType.unaddressed].
+  final List<int> to;
+
+  /// The tentative topic, for [DraftType.channel]; else the empty topic.
+  final TopicName topic;
+
+  final String content;
+
+  /// When the draft was last edited, in Unix seconds.
+  ///
+  /// The server stores this with sub-second precision,
+  /// but truncates it to whole seconds here.
+  final int timestamp;
+
+  /// This draft's data, for sending back to the server.
+  DraftData toData() => DraftData(
+    type: type,
+    to: to,
+    topic: topic,
+    content: content,
+    timestamp: timestamp);
+
+  factory Draft.fromJson(Map<String, Object?> json) =>
+    _$DraftFromJson(json);
+
+  Map<String, dynamic> toJson() => _$DraftToJson(this);
+}
+
+/// A draft to store on the server, in [createDrafts] and [editDraft].
+///
+/// Different from [Draft], this is a draft's data without the server's
+/// [Draft.id]: the server assigns that, and rejects a draft object
+/// that carries one.
+@JsonSerializable(fieldRename: FieldRename.snake, createFactory: false)
+class DraftData {
+  DraftData({
+    required this.type,
+    required this.to,
+    required this.topic,
+    required this.content,
+    required this.timestamp,
+  });
+
+  final DraftType type;
+
+  /// The tentative audience: one channel ID, or the DM recipients' user IDs.
+  ///
+  /// Empty for [DraftType.unaddressed].
+  final List<int> to;
+
+  /// The tentative topic, for [DraftType.channel]; else the empty topic.
+  final TopicName topic;
+
+  /// The body of the draft.
+  ///
+  /// The server rejects this when empty,
+  /// even though a draft needs nothing else filled in.
+  final String content;
+
+  /// When the draft was last edited, in Unix seconds.
+  ///
+  /// Null means to let the server fill in the current time.
+  /// The server takes any other value as given,
+  /// so editing a draft without advancing this leaves its
+  /// [Draft.timestamp] unchanged.
+  @JsonKey(includeIfNull: false)
+  final int? timestamp;
+
+  Map<String, dynamic> toJson() => _$DraftDataToJson(this);
+}
+
+/// As in [Draft.type].
+@JsonEnum(alwaysCreate: true)
+enum DraftType {
+  @JsonValue('') unaddressed,
+  @JsonValue('stream') channel,
+  @JsonValue('private') dm;
+
+  String toJson() => _$DraftTypeEnumMap[this]!;
+}
+
 /// As in `streams` in the initial snapshot.
 ///
 /// Not called `Stream` because dart:async uses that name.
