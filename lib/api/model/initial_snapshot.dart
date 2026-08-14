@@ -24,6 +24,16 @@ class InitialSnapshot {
 
   final List<CustomProfileField> customProfileFields;
 
+  /// The user's drafts stored on the server.
+  ///
+  /// Empty when the user's `enable_drafts_synchronization` setting is false;
+  /// see <https://zulip.com/api/register-queue>.
+  ///
+  /// The server truncates this to its 1000 most recently edited drafts,
+  /// without saying that it did so.
+  // TODO(#1217) fetch the rest with getDrafts when this looks truncated
+  final List<Draft> drafts;
+
   @JsonKey(name: 'max_stream_name_length')
   final int maxChannelNameLength;
   final int maxTopicLength;
@@ -176,6 +186,7 @@ class InitialSnapshot {
     required this.zulipMergeBase,
     required this.alertWords,
     required this.customProfileFields,
+    required this.drafts,
     required this.maxChannelNameLength,
     required this.maxTopicLength,
     required this.serverPresencePingIntervalSeconds,

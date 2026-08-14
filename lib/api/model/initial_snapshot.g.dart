@@ -22,6 +22,9 @@ InitialSnapshot _$InitialSnapshotFromJson(
   customProfileFields: (json['custom_profile_fields'] as List<dynamic>)
       .map((e) => CustomProfileField.fromJson(e as Map<String, dynamic>))
       .toList(),
+  drafts: (json['drafts'] as List<dynamic>)
+      .map((e) => Draft.fromJson(e as Map<String, dynamic>))
+      .toList(),
   maxChannelNameLength: (json['max_stream_name_length'] as num).toInt(),
   maxTopicLength: (json['max_topic_length'] as num).toInt(),
   serverPresencePingIntervalSeconds:
@@ -179,6 +182,7 @@ Map<String, dynamic> _$InitialSnapshotToJson(
   'zulip_merge_base': instance.zulipMergeBase,
   'alert_words': instance.alertWords,
   'custom_profile_fields': instance.customProfileFields,
+  'drafts': instance.drafts,
   'max_stream_name_length': instance.maxChannelNameLength,
   'max_topic_length': instance.maxTopicLength,
   'server_presence_ping_interval_seconds':
