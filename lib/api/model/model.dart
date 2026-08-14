@@ -738,13 +738,10 @@ class DraftData {
 }
 
 /// As in [Draft.type].
-@JsonEnum(alwaysCreate: true)
 enum DraftType {
   @JsonValue('') unaddressed,
   @JsonValue('stream') channel,
-  @JsonValue('private') dm;
-
-  String toJson() => _$DraftTypeEnumMap[this]!;
+  @JsonValue('private') dm,
 }
 
 /// As in `streams` in the initial snapshot.
