@@ -265,7 +265,7 @@ Draft _$DraftFromJson(Map<String, dynamic> json) => Draft(
 
 Map<String, dynamic> _$DraftToJson(Draft instance) => <String, dynamic>{
   'id': instance.id,
-  'type': instance.type,
+  'type': _$DraftTypeEnumMap[instance.type]!,
   'to': instance.to,
   'topic': instance.topic,
   'content': instance.content,
@@ -279,7 +279,7 @@ const _$DraftTypeEnumMap = {
 };
 
 Map<String, dynamic> _$DraftDataToJson(DraftData instance) => <String, dynamic>{
-  'type': instance.type,
+  'type': _$DraftTypeEnumMap[instance.type]!,
   'to': instance.to,
   'topic': instance.topic,
   'content': instance.content,
