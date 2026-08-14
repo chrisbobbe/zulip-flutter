@@ -968,6 +968,10 @@ class PerAccountStore extends PerAccountStoreBase with
         _savedSnippets.handleSavedSnippetsEvent(event);
         notifyListeners();
 
+      case DraftsEvent():
+        assert(debugLog('server event: drafts/${event.op}'));
+        // TODO(#1217) handle in a drafts substore
+
       case ChannelEvent():
         assert(debugLog("server event: stream/${event.op}"));
         if (event is ChannelDeleteEvent) {

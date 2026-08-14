@@ -525,6 +525,47 @@ Map<String, dynamic> _$SavedSnippetsRemoveEventToJson(
   'saved_snippet_id': instance.savedSnippetId,
 };
 
+DraftsAddEvent _$DraftsAddEventFromJson(Map<String, dynamic> json) =>
+    DraftsAddEvent(
+      id: (json['id'] as num).toInt(),
+      drafts: (json['drafts'] as List<dynamic>)
+          .map((e) => Draft.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+
+Map<String, dynamic> _$DraftsAddEventToJson(DraftsAddEvent instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': instance.type,
+      'drafts': instance.drafts,
+    };
+
+DraftsUpdateEvent _$DraftsUpdateEventFromJson(Map<String, dynamic> json) =>
+    DraftsUpdateEvent(
+      id: (json['id'] as num).toInt(),
+      draft: Draft.fromJson(json['draft'] as Map<String, dynamic>),
+    );
+
+Map<String, dynamic> _$DraftsUpdateEventToJson(DraftsUpdateEvent instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': instance.type,
+      'draft': instance.draft,
+    };
+
+DraftsRemoveEvent _$DraftsRemoveEventFromJson(Map<String, dynamic> json) =>
+    DraftsRemoveEvent(
+      id: (json['id'] as num).toInt(),
+      draftId: (json['draft_id'] as num).toInt(),
+    );
+
+Map<String, dynamic> _$DraftsRemoveEventToJson(DraftsRemoveEvent instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'type': instance.type,
+      'draft_id': instance.draftId,
+    };
+
 ChannelCreateEvent _$ChannelCreateEventFromJson(Map<String, dynamic> json) =>
     ChannelCreateEvent(
       id: (json['id'] as num).toInt(),

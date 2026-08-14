@@ -15,6 +15,18 @@ extension AlertWordsEventChecks on Subject<AlertWordsEvent> {
   Subject<List<String>> get alertWords => has((e) => e.alertWords, 'alertWords');
 }
 
+extension DraftsAddEventChecks on Subject<DraftsAddEvent> {
+  Subject<List<Draft>> get drafts => has((e) => e.drafts, 'drafts');
+}
+
+extension DraftsUpdateEventChecks on Subject<DraftsUpdateEvent> {
+  Subject<Draft> get draft => has((e) => e.draft, 'draft');
+}
+
+extension DraftsRemoveEventChecks on Subject<DraftsRemoveEvent> {
+  Subject<int> get draftId => has((e) => e.draftId, 'draftId');
+}
+
 extension DeviceUpdateEventChecks on Subject<DeviceUpdateEvent> {
   Subject<JsonNullable<int>?> get pushKeyId => has((e) => e.pushKeyId, 'pushKeyId');
   Subject<JsonNullable<String>?> get pushTokenId => has((e) => e.pushTokenId, 'pushTokenId');
