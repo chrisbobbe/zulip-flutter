@@ -5,8 +5,15 @@ import 'package:zulip/api/model/model.dart';
 
 import '../../example_data.dart' as eg;
 import '../../stdlib_checks.dart';
+import 'model_checks.dart';
 
 void main() {
+  test('InitialSnapshot: drafts', () {
+    final json = deepToJson(eg.initialSnapshot(drafts: [eg.draft(id: 17)]))
+      as Map<String, dynamic>;
+    check(InitialSnapshot.fromJson(json).drafts).single.id.equals(17);
+  });
+
   test('UnreadMessagesSnapshot from json recognizes channels as streams', () {
     final snapshot = UnreadMessagesSnapshot.fromJson({
       'count': 1,
