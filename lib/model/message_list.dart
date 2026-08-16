@@ -400,6 +400,22 @@ mixin _MessageSequence {
     return true;
   }
 
+  /// Mark this sequence as no longer having the newest messages,
+  /// so that a subsequent [MessageListView.fetchNewer] can find them.
+  ///
+  /// This removes all [outboxMessages], preserving the invariant that
+  /// those are present only when [haveNewest] is true;
+  /// see [MessageListView._syncOutboxMessagesFromStore], which will
+  /// restore them when a fetch again reaches the newest messages.
+  void _invalidateHaveNewest() {
+    assert(haveNewest);
+    _haveNewest = false;
+    if (outboxMessages.isNotEmpty) {
+      outboxMessages.clear();
+      _removeOutboxMessageItems();
+    }
+  }
+
   /// Reset all [_MessageSequence] data, and cancel any active fetches.
   void _reset() {
     generation += 1;
@@ -1071,6 +1087,37 @@ class MessageListView with ChangeNotifier, _MessageSequence {
     if (_removeOutboxMessage(outboxMessage)) {
       notifyListeners();
     }
+  }
+
+  /// Called when the store has newly learned of messages from a fetch,
+  /// whether by this view or another;
+  /// see [MessageStoreImpl.reconcileMessages].
+  ///
+  /// If any of the messages belong in this view but are newer than the
+  /// messages it has, then stop claiming to have the newest messages
+  /// ([haveNewest] becomes false), so that a subsequent [fetchNewer]
+  /// will find them.
+  ///
+  /// Normally such messages would already have been added to this view,
+  /// on a message event.  But the event queue might be delayed or stuck
+  /// (see #2397) while fetches continue to succeed; in that case this is
+  /// how the view learns its impression of being caught up is stale.
+  void handleMessagesLearnedFromFetch(List<Message> newlyLearned) {
+    if (!haveNewest) return;
+    if (messages.isEmpty) {
+      // A [fetchNewer] would have no message to anchor its request at.
+      // TODO handle a new message landing in a narrow whose view is empty
+      //   (because the narrow was empty of messages, or none were visible)
+      //   while the event queue is stuck.
+      return;
+    }
+    final hasNewerMessage = newlyLearned.any((message) =>
+      message.id > messages.last.id
+        && narrow.containsMessage(message) == true
+        && _messageVisible(message));
+    if (!hasNewerMessage) return;
+    _invalidateHaveNewest();
+    notifyListeners();
   }
 
   void handleUserTopicEvent(UserTopicEvent event) {

@@ -982,6 +982,152 @@ void main() {
     }));
   });
 
+  group('handleMessagesLearnedFromFetch', () {
+    final stream = eg.stream();
+    final narrow = ChannelNarrow(stream.streamId);
+    final initialMessageIds = List.generate(30, (i) => 1000 + i);
+
+    Future<void> prepareNarrow() async {
+      await prepare(narrow: narrow, stream: stream);
+      await prepareMessages(foundOldest: true, messages: [
+        for (final id in initialMessageIds)
+          eg.streamMessage(id: id, stream: stream, topic: 'topic')]);
+      check(model).haveNewest.isTrue();
+    }
+
+    test('newer message in narrow -> invalidate haveNewest; fetchNewer finds it', () async {
+      await prepareNarrow();
+
+      // Another message list's fetch learns of a newer message in the narrow
+      // (the event queue being stuck, no message event has arrived).
+      final message = eg.streamMessage(id: 2000, stream: stream, topic: 'topic');
+      store.reconcileMessages([message]);
+      checkNotifiedOnce();
+      check(model).haveNewest.isFalse();
+      checkHasMessageIds(initialMessageIds);
+
+      // A subsequent fetchNewer, as the UI would prompt, finds the message.
+      connection.prepare(json: newerResult(
+        anchor: initialMessageIds.last, foundNewest: true,
+        messages: [message]).toJson());
+      final fetchFuture = model.fetchNewer();
+      checkNotifiedOnce();
+      check(model).busyFetchingMore.isTrue();
+
+      await fetchFuture;
+      checkNotifiedOnce();
+      check(model)
+        ..haveNewest.isTrue()
+        ..busyFetchingMore.isFalse();
+      checkHasMessageIds([...initialMessageIds, 2000]);
+    });
+
+    test('message not in narrow -> no effect', () async {
+      await prepareNarrow();
+
+      store.reconcileMessages([
+        eg.dmMessage(id: 2000, from: eg.otherUser, to: [eg.selfUser])]);
+      checkNotNotified();
+      check(model).haveNewest.isTrue();
+    });
+
+    test('message in narrow but muted -> no effect', () async {
+      await prepareNarrow();
+      await store.setUserTopic(stream, 'muted topic', UserTopicVisibilityPolicy.muted);
+      checkNotNotified();
+
+      store.reconcileMessages([
+        eg.streamMessage(id: 2000, stream: stream, topic: 'muted topic')]);
+      checkNotNotified();
+      check(model).haveNewest.isTrue();
+    });
+
+    test('message not newer than the view -> no effect', () async {
+      // An absent message with an ID inside the view's fetched history can
+      // arise from a message move.  A fetchNewer wouldn't find it,
+      // so don't invalidate.
+      await prepareNarrow();
+
+      store.reconcileMessages([
+        eg.streamMessage(id: 999, stream: stream, topic: 'topic')]);
+      checkNotNotified();
+      check(model).haveNewest.isTrue();
+    });
+
+    test('message already known to store -> no effect', () async {
+      await prepareNarrow();
+
+      store.reconcileMessages([
+        eg.streamMessage(id: initialMessageIds.last, stream: stream, topic: 'topic')]);
+      checkNotNotified();
+      check(model).haveNewest.isTrue();
+    });
+
+    test('when not haveNewest -> no effect', () async {
+      await prepare(narrow: narrow, stream: stream,
+        anchor: NumericAnchor(initialMessageIds.first));
+      await prepareMessages(foundOldest: true, foundNewest: false, messages: [
+        for (final id in initialMessageIds)
+          eg.streamMessage(id: id, stream: stream, topic: 'topic')]);
+      check(model).haveNewest.isFalse();
+
+      store.reconcileMessages([
+        eg.streamMessage(id: 2000, stream: stream, topic: 'topic')]);
+      checkNotNotified();
+      check(model).haveNewest.isFalse();
+    });
+
+    test('empty narrow -> no effect', () async {
+      // TODO make this case invalidate too; see TODO in
+      //   [MessageListView.handleMessagesLearnedFromFetch].
+      await prepare(narrow: narrow, stream: stream);
+      await prepareMessages(foundOldest: true, messages: []);
+      check(model).haveNewest.isTrue();
+      check(model).messages.isEmpty();
+
+      store.reconcileMessages([
+        eg.streamMessage(id: 2000, stream: stream, topic: 'topic')]);
+      checkNotNotified();
+      check(model).haveNewest.isTrue();
+    });
+
+    test('outbox messages removed, and restored when fetch reaches end', () => awaitFakeAsync((async) async {
+      await prepareNarrow();
+      connection.prepare(httpException: SocketException('failed'));
+      await check(store.sendMessage(
+        destination: StreamDestination(stream.streamId, eg.t('topic')),
+        content: 'content')).throws();
+      check(model).outboxMessages.single;
+      checkNotifiedOnce();
+
+      // Learning of someone else's newer message invalidates [haveNewest],
+      // which requires removing the outbox messages from the view
+      // (they belong only at the true end of history).
+      final message = eg.streamMessage(id: 2000, stream: stream, topic: 'topic');
+      store.reconcileMessages([message]);
+      checkNotifiedOnce();
+      check(model)
+        ..haveNewest.isFalse()
+        ..outboxMessages.isEmpty();
+      // ... but they remain in the store, awaiting the user's attention.
+      check(store.outboxMessages).length.equals(1);
+
+      // When a fetch again reaches the newest messages,
+      // the outbox messages reappear, after the newly fetched message.
+      connection.prepare(json: newerResult(
+        anchor: initialMessageIds.last, foundNewest: true,
+        messages: [message]).toJson());
+      final fetchFuture = model.fetchNewer();
+      checkNotifiedOnce();
+      await fetchFuture;
+      checkNotifiedOnce();
+      check(model)
+        ..haveNewest.isTrue()
+        ..outboxMessages.single;
+      checkHasMessageIds([...initialMessageIds, 2000]);
+    }));
+  });
+
   group('UserTopicEvent', () {
     // The ChannelStore.willChangeIfTopicVisible/InStream methods have their own
     // thorough unit tests.  So these tests focus on the rest of the logic.
@@ -2182,10 +2328,11 @@ void main() {
           anchor: AnchorCode.newest)
         ..addListener(() => notifiedCount2++);
 
+      final initialMessage = eg.streamMessage(stream: stream, topic: 'hello');
       for (final m in [model1, model2]) {
         connection.prepare(json: newestResult(
           foundOldest: false,
-          messages: [eg.streamMessage(stream: stream, topic: 'hello')]).toJson());
+          messages: [initialMessage]).toJson());
         await m.fetchInitial();
       }
 
