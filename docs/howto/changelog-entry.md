@@ -31,9 +31,7 @@ Store, in TestFlight, and on GitHub: the release process converts
 it with `tools/format-changelog user`.
 
 * Keep the section within 500 characters, the Play Store's limit
-  for release notes.  (When there have been more highlights than
-  fit, we've listed the rest under "Highlights for developers";
-  see the 0.0.29 entry.)
+  for release notes.
 
 * List only user-visible changes in the app's behavior, and only
   changes users might be happy to see.  For example, dropping
