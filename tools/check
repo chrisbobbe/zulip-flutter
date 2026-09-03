@@ -353,40 +353,58 @@ EOF
     return 0
 }
 
+# Emails that mark a commit as machine-authored, not by a
+# responsible human.  Add other coding agents' addresses
+# here as needed.
+bot_emails=(
+    'noreply@anthropic.com'    # Claude Code
+)
+
+# usage: bot_email_grep_args
+#
+# Print `grep -F` arguments matching any of $bot_emails, each
+# framed in <>s so that only a whole address matches.
+bot_email_grep_args() {
+    local email
+    for email in "${bot_emails[@]}"; do
+        printf -- '-e\n<%s>\n' "${email}"
+    done
+}
+
+# usage: list_bot_commits BASE
+#
+# List the commits in BASE..@ authored or committed by a bot email,
+# as "HASH  <AUTHOR>  <COMMITTER>" lines.  Exit 0 if there are any,
+# 1 if none, and 2 on error -- like grep, which does the matching.
+list_bot_commits() {
+    local commits
+    local -a grep_args
+    commits=$(git log --format='%h  <%ae>  <%ce>' "$1..@") || return 2
+    mapfile -t grep_args < <(bot_email_grep_args)
+    grep -F "${grep_args[@]}" <<<"$commits"
+}
+
 # Check that the branch's commits are authored and committed by a
 # human, not by Claude.  Claude Code on the web makes commits as
 # "Claude <noreply@anthropic.com>"; that's honest for a draft, but a
 # human takes authorship before it lands in a PR.  See
 # docs/howto/claude-web.md ("Trust model").
+#
+# With --fix, take authorship of the flagged commits: amend each
+# with --reset-author, in a rebase that leaves other commits alone.
 run_authorship() {
-    # Emails that mark a commit as machine-authored, not by a
-    # responsible human.  Add other coding agents' addresses
-    # here as needed.
-    local bot_emails=(
-        'noreply@anthropic.com'    # Claude Code
-    )
-
-    local base bad commits email rc hashes
-    local -a grep_args=()
+    local base bad rc hashes
     # CI fetches full history for this; see .github/workflows/ci.yml.
     if ! base=$(base_commit_with_hint); then
         echo >&2 "Or leave this suite out: \`--exclude authorship\`."
         return 1
     fi
-    # The <>s let the grep below match only a whole address.
-    commits=$(git log --format='%h  <%ae>  <%ce>' "${base}..@") || return
-    for email in "${bot_emails[@]}"; do
-        grep_args+=(-e "<${email}>")
-    done
-    # grep exits 0 (match), 1 (no match), or >=2 (error).  A clean
-    # "no match" passes; an error fails the check rather than
-    # slipping through -- fail closed, like the git log above.
     rc=0
-    bad=$(grep -F "${grep_args[@]}" <<<"$commits") || rc=$?
+    bad=$(list_bot_commits "${base}") || rc=$?
     case $rc in
         0) ;;                        # bot-authored commit(s) found
         1) return 0 ;;               # none -- clean
-        *) echo "authorship: grep failed" >&2; return 2 ;;
+        *) echo "authorship: listing commits failed" >&2; return 2 ;;
     esac
 
     # Re-list the flagged commits with subjects, for readability.
@@ -396,22 +414,65 @@ run_authorship() {
     # shellcheck disable=SC2086  # deliberately word-split the hash list
     bad=$(git show -s --format='  %h  %ae  %ce  %s' $hashes) || return
 
-    cat >&2 <<EOF
+    if [ -z "${opt_fix}" ]; then
+        cat >&2 <<EOF
 error: commit(s) authored or committed as Claude:
 
 ${bad}
 
-Take authorship of these when adopting them.  For a flagged commit
-at the tip of the branch:
-  \$ git commit --amend --reset-author
-Or, when adopting a branch that's wholly Claude's, re-author every
-commit since the branch's fork point from upstream main (below as
-the remote \`upstream\`, freshly fetched):
-  \$ git rebase --exec 'git commit --amend --reset-author --no-edit' \\
-        \$(git merge-base @ upstream/main)
-See docs/howto/claude-web.md ("Trust model").
+Take authorship of these when adopting them, once you'd stand behind
+them: \`tools/check --fix authorship\` re-authors just these commits
+as you, in place.  See docs/howto/claude-web.md ("Trust model").
 EOF
-    return 1
+        return 1
+    fi
+
+    # Re-authoring as a machine identity would change nothing; this
+    # happens in a cloud session unless the human has set their own
+    # identity there.
+    local ident
+    local -a grep_args
+    ident=$(git var GIT_AUTHOR_IDENT | sed 's/ [0-9]* [-+][0-9]*$//') || return
+    mapfile -t grep_args < <(bot_email_grep_args)
+    if grep -qF "${grep_args[@]}" <<<"${ident}"; then
+        cat >&2 <<EOF
+error: the current Git identity is a machine author:
+  ${ident}
+Re-authoring as that would change nothing.  Set your own identity
+(user.name and user.email in Git config, or the GIT_AUTHOR_* and
+GIT_COMMITTER_* environment variables), then rerun.
+EOF
+        return 1
+    fi
+
+    # The rebase needs a clean tree; and don't risk anyone's work.
+    check_no_uncommitted_or_untracked || return
+
+    echo >&2 "Re-authoring as ${ident}:"
+    echo >&2 "${bad}"
+    # Replay the branch, amending just the commits that match; see
+    # tools/lib/reauthor-commit.  Even --quiet announces each exec;
+    # show that only on failure.
+    local output
+    export AUTHORSHIP_BOT_EMAILS
+    AUTHORSHIP_BOT_EMAILS=$(printf '%s\n' "${bot_emails[@]}")
+    if ! output=$(git rebase --quiet "${base}" \
+                      --exec "'${rootdir}/tools/lib/reauthor-commit'" 2>&1); then
+        echo >&2 "${output}"
+        return 1
+    fi
+
+    # Confirm the result, in case e.g. the committer identity is
+    # still a bot's while the author's isn't.
+    rc=0
+    bad=$(list_bot_commits "${base}") || rc=$?
+    case $rc in
+        1) return 0 ;;
+        0) echo >&2 "error: commit(s) still authored or committed as Claude:"
+           echo >&2 "${bad}"
+           return 1 ;;
+        *) echo "authorship: listing commits failed" >&2; return 2 ;;
+    esac
 }
 
 # Whether the build_runner suite should run, given $opt_files.

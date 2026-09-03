@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The per-commit step of `tools/check --fix authorship`, which runs
+# this on each commit of the branch via `git rebase --exec`.  (A
+# separate script because the exec runs under sh, which can't see
+# functions defined in tools/check.)
+#
+# If the commit's author or committer is a bot -- per
+# $AUTHORSHIP_BOT_EMAILS, one address per line -- amend it with
+# --reset-author.  If the bot authored it, also credit the bot in a
+# Co-Authored-By trailer, unless one already names it.  (A cloud
+# session usually adds such a trailer, but that's the model following
+# instructions, not guaranteed: a dictated commit message came
+# without one.)
+
+grep_args=()
+while IFS= read -r email; do
+    grep_args+=(-e "<${email}>")
+done <<<"${AUTHORSHIP_BOT_EMAILS}"
+
+author=$(git log -1 --format='%an <%ae>')
+committer=$(git log -1 --format='%cn <%ce>')
+grep -qF "${grep_args[@]}" <<<"${author}"$'\n'"${committer}" || exit 0
+
+trailers=$(git log -1 --format=%B | git interpret-trailers --parse)
+if grep -qF "${grep_args[@]}" <<<"${author}" \
+        && ! grep -qF "${grep_args[@]}" <<<"${trailers}"; then
+    exec git commit --quiet --amend --no-edit --reset-author \
+        --trailer "Co-Authored-By: ${author}"
+fi
+exec git commit --quiet --amend --no-edit --reset-author

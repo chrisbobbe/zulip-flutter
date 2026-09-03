@@ -49,8 +49,8 @@ of the way is local. [Teleport][teleport] the session into
 your terminal with `claude --teleport <session-id>`, which
 checks out its branch and brings the conversation along.
 Then review and revise, take authorship of the commits
-(`--reset-author`), and mark the PR ready for review once
-you'd stand behind it.
+(`tools/check --fix authorship`), and mark the PR ready for
+review once you'd stand behind it.
 
 [sync-fork]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
 [teleport]: https://code.claude.com/docs/en/claude-code-on-the-web#from-web-to-terminal
@@ -175,16 +175,20 @@ SSH-signed as Anthropic's `claude` GitHub identity (GitHub
 shows them "Verified"), with your name nowhere on them. As
 provenance for a draft on your fork, that's honest; but a
 commit with no responsible human author shouldn't land in a
-PR. When adopting a session's commit, take authorship
-(`git cherry-pick` preserves the old author; amend with
-`--reset-author`), and let a Co-Authored-By trailer credit
-Claude, as with local Claude commits. The `authorship` suite
-in `tools/check` enforces this in CI (locally, run it by
-name). A PR the session opens is the reverse: it's created on
-behalf of your
-own GitHub account. So a session opens one only as a draft,
-a handoff that still needs you to adopt the commits and mark
-it ready for review.
+PR. When adopting a session's commits, take authorship:
+`tools/check --fix authorship` re-authors the ones that are
+Claude's (`--teleport` and `git cherry-pick` both preserve
+the old author), leaving Claude credited in a Co-Authored-By
+trailer, as with local Claude commits (it adds the trailer if
+the session didn't).
+The `authorship` suite in `tools/check` enforces this in CI
+(locally, run it by name). Run the fix yourself, at the moment
+you're ready to stand behind the commits; a session doesn't
+run it on its own initiative (Claude's instructions say so).
+A PR the session opens is the reverse: it's created on behalf
+of your own GitHub account. So a session opens one only as a
+draft, a handoff that still needs you to adopt the commits and
+mark it ready for review.
 
 [ai-policy]: https://zulip.readthedocs.io/en/latest/contributing/contributing.html#ai-use-policy-and-guidelines
 
