@@ -126,6 +126,8 @@ finishes the job in each session:
 - if it was started on upstream rather than a fork, tells Claude
   to stop and have you restart on your fork (a SessionStart hook
   can't hard-halt a session, so it warns via context; see above);
+- turns off commit signing, which would otherwise sign as
+  Anthropic's `claude` identity (see [Trust model](#trust-model));
 - fetches your fork's `main`, which the session's shallow,
   single-branch clone lacks and `tools/check` needs, to find
   the branch's merge-base;
@@ -170,10 +172,13 @@ fork (pushing a new branch there worked, 2026-09). Review anything
 it produces like any other contributor's work, per Zulip's
 [AI use policy][ai-policy].
 
-Commits made in a session are authored, committed, and
-SSH-signed as Anthropic's `claude` GitHub identity (GitHub
-shows them "Verified"), with your name nowhere on them. As
-provenance for a draft on your fork, that's honest; but a
+Commits made in a session are authored and committed as
+Claude (`noreply@anthropic.com`), with your name nowhere on
+them, and unsigned: the container would sign them as
+Anthropic's `claude` GitHub identity, but the session-start
+hook turns that off, since the signature would stop meaning
+anything once you take authorship. As provenance for a draft
+on your fork, that's honest; but a
 commit with no responsible human author shouldn't land in a
 PR. When adopting a session's commits, take authorship:
 `tools/check --fix authorship` re-authors the ones that are

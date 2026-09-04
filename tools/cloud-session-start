@@ -40,6 +40,15 @@ EOF
         exit 0;;
 esac
 
+# The container signs commits with a key Anthropic holds, as its
+# `claude` GitHub identity.  That's coherent only while the author
+# is Claude; once a human takes authorship (`tools/check --fix
+# authorship`), the same signature over their name would show as
+# "Unverified".  Leave every cloud commit unsigned instead.  (This
+# is repo-local config, so it's redone for each session's fresh
+# clone; the author line still says who made each commit.)
+git config commit.gpgsign false
+
 # The clone is shallow and has only the session's branch, so
 # `tools/check` can't find the branch's merge-base with main, which
 # it needs before running any suite.  Fetch main (quick, as seen
