@@ -427,20 +427,39 @@ EOF
         return 1
     fi
 
-    # Re-authoring as a machine identity would change nothing; this
-    # happens in a cloud session unless the human has set their own
-    # identity there.
+    # The identity to re-author as is normally the current Git
+    # identity.  But in a cloud session that's Claude's; a human
+    # adopting from there supplies their own in ADOPT_AUTHOR_NAME and
+    # ADOPT_AUTHOR_EMAIL, set in the cloud environment's variables.
+    # Only this fix reads those, so the session's other commits stay
+    # Claude's.  See docs/howto/claude-web.md ("Session workflow").
+    local -a with_ident=()
+    if [ -n "${ADOPT_AUTHOR_NAME-}${ADOPT_AUTHOR_EMAIL-}" ]; then
+        if [ -z "${ADOPT_AUTHOR_NAME-}" ] || [ -z "${ADOPT_AUTHOR_EMAIL-}" ]; then
+            echo >&2 "error: set both ADOPT_AUTHOR_NAME and ADOPT_AUTHOR_EMAIL, or neither"
+            return 1
+        fi
+        with_ident=(env
+            GIT_AUTHOR_NAME="${ADOPT_AUTHOR_NAME}"
+            GIT_AUTHOR_EMAIL="${ADOPT_AUTHOR_EMAIL}"
+            GIT_COMMITTER_NAME="${ADOPT_AUTHOR_NAME}"
+            GIT_COMMITTER_EMAIL="${ADOPT_AUTHOR_EMAIL}")
+    fi
+
+    # Re-authoring as a machine identity would change nothing.
     local ident
     local -a grep_args
-    ident=$(git var GIT_AUTHOR_IDENT | sed 's/ [0-9]* [-+][0-9]*$//') || return
+    ident=$("${with_ident[@]}" git var GIT_AUTHOR_IDENT \
+                | sed 's/ [0-9]* [-+][0-9]*$//') || return
     mapfile -t grep_args < <(bot_email_grep_args)
     if grep -qF "${grep_args[@]}" <<<"${ident}"; then
         cat >&2 <<EOF
 error: the current Git identity is a machine author:
   ${ident}
-Re-authoring as that would change nothing.  Set your own identity
-(user.name and user.email in Git config, or the GIT_AUTHOR_* and
-GIT_COMMITTER_* environment variables), then rerun.
+Re-authoring as that would change nothing.  Set your own identity:
+user.name and user.email in Git config; or, from inside a cloud
+session, ADOPT_AUTHOR_NAME and ADOPT_AUTHOR_EMAIL in the cloud
+environment's variables (see docs/howto/claude-web.md).
 EOF
         return 1
     fi
@@ -456,7 +475,7 @@ EOF
     local output
     export AUTHORSHIP_BOT_EMAILS
     AUTHORSHIP_BOT_EMAILS=$(printf '%s\n' "${bot_emails[@]}")
-    if ! output=$(git rebase --quiet "${base}" \
+    if ! output=$("${with_ident[@]}" git rebase --quiet "${base}" \
                       --exec "'${rootdir}/tools/lib/reauthor-commit'" 2>&1); then
         echo >&2 "${output}"
         return 1

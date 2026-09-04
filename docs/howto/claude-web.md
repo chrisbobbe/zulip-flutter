@@ -42,15 +42,26 @@ Then pick your fork and branch when starting the session;
 
 At the other end, a session hands its work back rather than
 landing it. It commits and pushes to the branch you started it
-on, and may open a pull request, but only ever a **draft** one:
-the commits are Claude's, and a draft says the work still needs
-a human (see [Trust model](#trust-model)). Taking it the rest
-of the way is local. [Teleport][teleport] the session into
-your terminal with `claude --teleport <session-id>`, which
-checks out its branch and brings the conversation along.
-Then review and revise, take authorship of the commits
-(`tools/check --fix authorship`), and mark the PR ready for
-review once you'd stand behind it.
+on, and may open a pull request, but as a **draft** while the
+commits are Claude's: a draft says the work still needs a human
+(see [Trust model](#trust-model)). Taking it the rest of the
+way is yours: review and revise, take authorship of the
+commits, and mark the PR ready for review once you'd stand
+behind it (or, having taken authorship from inside the session,
+have the session do it).
+
+Taking authorship is one command, `tools/check --fix
+authorship`, which re-authors the commits that are Claude's.
+From a terminal, first [teleport][teleport] the session with
+`claude --teleport <session-id>`, which checks out its branch
+and brings the conversation along. Or run it from inside the
+session, with no terminal, by telling the session to. For
+that to re-author the commits as you rather than as Claude,
+first put your name and email in the environment's variables
+as `ADOPT_AUTHOR_NAME` and `ADOPT_AUTHOR_EMAIL` (see
+[Setting up an environment](#setting-up-an-environment)).
+Only that command reads them, so the session's other commits
+stay Claude's.
 
 [sync-fork]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
 [teleport]: https://code.claude.com/docs/en/claude-code-on-the-web#from-web-to-terminal
@@ -100,7 +111,10 @@ web UI:
   (Changing the allowed domains invalidates the environment
   cache.)
 
-- **Environment variables**: none needed; a GitHub token in
+- **Environment variables**: optionally `ADOPT_AUTHOR_NAME`
+  and `ADOPT_AUTHOR_EMAIL`, your name and email, for taking
+  authorship of commits from inside a session (see "Session
+  workflow" above). Nothing else is needed; a GitHub token in
   particular gains nothing (see "Limitations / rough edges"
   below).
 
@@ -191,9 +205,12 @@ The `authorship` suite in `tools/check` enforces this in CI
 you're ready to stand behind the commits; a session doesn't
 run it on its own initiative (Claude's instructions say so).
 A PR the session opens is the reverse: it's created on behalf
-of your own GitHub account. So a session opens one only as a
-draft, a handoff that still needs you to adopt the commits and
-mark it ready for review.
+of your own GitHub account. So while any commit is Claude's,
+a session opens one only as a draft: a handoff that still
+needs you to adopt the commits and mark it ready for review.
+Once you have, and the `authorship` suite passes, the session
+may open it as ready at your request. (Converting an existing
+draft to ready is yours to do, on GitHub.)
 
 [ai-policy]: https://zulip.readthedocs.io/en/latest/contributing/contributing.html#ai-use-policy-and-guidelines
 

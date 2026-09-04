@@ -148,14 +148,14 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   when an issue's comment thread matters, ask the user to paste it.
   (Limitation tracked as anthropics/claude-code#78277.)
 
-- **Open pull requests only as drafts.**
-  A PR is created on behalf of the user's own GitHub account,
-  and a session's commits are authored as Claude, with no
-  responsible human author. A draft says so: it's a handoff,
-  not a submission. After opening one, tell the user the rest
-  is theirs — teleport the session (`claude --teleport`), revise
-  and take authorship (`tools/check --fix authorship`), and mark
-  the PR ready for review. See docs/howto/claude-web.md ("Trust model").
+- **Open pull requests as drafts while any commit is Claude's.**
+  A commit authored as Claude has no responsible human author,
+  and a draft says so. Tell the user the rest is theirs: review,
+  take authorship (`tools/check --fix authorship`, run here at
+  their request or after `claude --teleport`), and mark the PR
+  ready. Once `tools/check authorship` passes, open the PR as
+  ready if the user asks. See docs/howto/claude-web.md
+  ("Trust model").
 
 
 ## Using Git
