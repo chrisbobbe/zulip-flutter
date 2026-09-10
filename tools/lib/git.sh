@@ -45,7 +45,17 @@ check_no_uncommitted_or_untracked()
     else
         return 0
     fi
+    report_dirty_tree "$problem" "$@"
+    return 1
+}
 
+# usage: report_dirty_tree PROBLEM [PATHS..]
+#
+# Print, to stderr, the "aborting" report for
+# check_no_uncommitted_or_untracked. PROBLEM names what was found.
+report_dirty_tree()
+{
+    local problem="$1"; shift
     local qualifier=
     if (( $# )); then
         qualifier=" in $*"
@@ -55,7 +65,6 @@ check_no_uncommitted_or_untracked()
     git_status_short "$@"
     echo >&2
     echo >&2 "Aborting, to avoid losing your work."
-    return 1
 }
 
 # Compute what remote name is being used for the upstream repo.
