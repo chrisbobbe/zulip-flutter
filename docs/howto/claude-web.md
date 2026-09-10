@@ -151,8 +151,8 @@ the session wrote commits you want to send in a PR.
 
 4. **Receive the handoff.** A session's work comes back to you
    to finish, not straight to review. It may open a pull
-   request, but only ever a **draft** one: the commits are
-   Claude's, and a draft says the work still needs a human (see
+   request, but as a **draft** while the commits are Claude's:
+   a draft says the work still needs a human (see
    [Trust model](#trust-model)). Taking it the rest of the way
    is yours, in the steps below.
 
@@ -182,7 +182,8 @@ the session wrote commits you want to send in a PR.
 7. **Send the PR.** If the session opened a draft PR, mark it
    ready for review on GitHub once you'd stand behind it (per
    Zulip's [AI use policy][ai-policy]). If it didn't, open one
-   yourself.
+   yourself, or ask the session to: with authorship taken, it
+   can open the PR as non-draft.
 
 [sync-fork]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
 [teleport]: https://code.claude.com/docs/en/claude-code-on-the-web#from-web-to-terminal
