@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The per-commit step of `tools/check --fix authorship`, which runs
+# this on each commit of the branch via `git rebase --exec`. (A
+# separate script because the exec runs under sh, which can't see
+# functions defined in tools/check.)
+#
+# If the commit's author is a bot -- per $bot_emails, in
+# tools/lib/authorship.sh -- amend it with --reset-author, and credit the
+# bot in a Co-Authored-By trailer unless one already names it. (A
+# cloud session usually adds such a trailer, but that's the model
+# following instructions, not guaranteed: a dictated commit message
+# came without one.)
+#
+# If only the committer is a bot -- a human's commit that a cloud
+# session rebased or cherry-picked -- amend without --reset-author:
+# that refreshes the committer and leaves the author alone.
+
+# shellcheck source=tools/lib/authorship.sh
+. "${BASH_SOURCE[0]%/*}"/authorship.sh
+
+mapfile -t grep_args < <(bot_email_grep_args)
+
+author=$(git log -1 --format='%an <%ae>')
+committer=$(git log -1 --format='%cn <%ce>')
+if ! grep -qF "${grep_args[@]}" <<<"${author}"; then
+    if grep -qF "${grep_args[@]}" <<<"${committer}"; then
+        exec git commit --quiet --amend --no-edit --allow-empty
+    fi
+    exit 0
+fi
+
+coauthors=$(git log -1 --format=%B | git interpret-trailers --parse \
+                | grep -i '^Co-Authored-By:' || :)
+if grep -qF "${grep_args[@]}" <<<"${coauthors}"; then
+    exec git commit --quiet --amend --no-edit --allow-empty --reset-author
+fi
+exec git commit --quiet --amend --no-edit --allow-empty --reset-author \
+    --trailer "Co-Authored-By: ${author}"

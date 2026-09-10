@@ -77,8 +77,8 @@ What tests to run:
 
 Extra things to do, or skip doing:
   --fix       Fix issues found, where possible. Requires naming the
-              suite(s) to fix, so that no fix runs as a side effect
-              of a broad fix run.
+              suite(s) to fix: one fix (authorship) rewrites Git
+              history, and that shouldn't happen as a side effect.
   --no-pub    Tell \`flutter test\` et al. to skip \`flutter pub get\`.
 
 Modifying this script's output:
@@ -387,6 +387,11 @@ list_bot_commits() {
 # own identity; that's fine for a draft, but a human should take
 # authorship before it lands in a PR. See docs/howto/claude-web.md
 # ("Trust model").
+#
+# With --fix, take authorship of the flagged commits, in a rebase
+# that leaves other commits alone: a commit an agent authored gets
+# --reset-author; one an agent merely committed (a human's, rebased
+# or cherry-picked in a session) gets a plain amend, keeping its author.
 run_authorship() {
     local base bad status hashes
     # CI fetches full history for this; see .github/workflows/ci.yml.
@@ -410,22 +415,76 @@ run_authorship() {
     # shellcheck disable=SC2086  # deliberately word-split the hash list
     bad=$(git show -s --format='  %h  %ae  %ce  %s' $hashes) || return
 
-    cat >&2 <<EOF
+    if [ -z "${opt_fix}" ]; then
+        cat >&2 <<EOF
 error: commit(s) authored or committed by a coding agent:
 
 ${bad}
 
-Take authorship of these when adopting them. For a flagged commit
-at the tip of the branch:
-  \$ git commit --amend --reset-author
-Or, when adopting a branch that's wholly an agent's, re-author every
-commit since the branch's fork point from upstream main (below as
-the remote \`upstream\`, freshly fetched):
-  \$ git rebase --exec 'git commit --amend --reset-author --no-edit' \\
-        \$(git merge-base @ upstream/main)
-See docs/howto/claude-web.md ("Trust model").
+Take authorship of these when you're ready to be responsible for
+them: \`tools/check --fix authorship\` re-authors just these commits
+as you, in place. See docs/howto/claude-web.md ("Trust model").
 EOF
-    return 1
+        return 1
+    fi
+
+    # Re-authoring as a machine identity would change nothing.
+    local ident
+    local -a grep_args
+    ident=$(git var GIT_AUTHOR_IDENT \
+                | sed 's/ [0-9]* [-+][0-9]*$//') || return
+    mapfile -t grep_args < <(bot_email_grep_args)
+    if grep -qF "${grep_args[@]}" <<<"${ident}"; then
+        cat >&2 <<EOF
+error: the current Git identity is a machine author:
+  ${ident}
+Set your own identity instead: user.name and user.email in Git
+config.
+EOF
+        return 1
+    fi
+
+    # The rebase needs a clean index and worktree; untracked files
+    # are fine, since the replay never touches them.
+    check_no_uncommitted || return
+
+    # Our branches aren't supposed to have merge commits. Fail if one
+    # is found; the linear replay would flatten it.
+    if git rev-list --merges "${base}..@" | grep -q .; then
+        cat >&2 <<EOF
+error: the branch has merge commits, which this fix can't replay:
+$(git log --merges --format='  %h  %s' "${base}..@")
+Rebase the branch to a linear history first.
+EOF
+        return 1
+    fi
+
+    echo >&2 "Re-authoring as ${ident}:"
+    echo >&2 "${bad}"
+    # Replay the branch, amending just the commits that match; see
+    # tools/lib/reauthor-commit. Run copies of that script and the
+    # library it sources, taken from the current commit: during the
+    # replay the worktree is at each replayed commit in turn, which
+    # may have older versions of them, or none. Even --quiet announces
+    # each exec; show that only on failure, and leave no rebase in
+    # progress.
+    local tmpdir output f
+    tmpdir=$(mktemp -d) || return
+    for f in reauthor-commit authorship.sh; do
+        git show @:tools/lib/"$f" > "${tmpdir}/$f" \
+            || { rm -r "${tmpdir}"; return 1; }
+    done
+    chmod +x "${tmpdir}"/reauthor-commit || { rm -r "${tmpdir}"; return 1; }
+    if ! output=$(git rebase --quiet "${base}" \
+                      --exec "'${tmpdir}/reauthor-commit'" 2>&1); then
+        rm -r "${tmpdir}"
+        echo >&2 "${output}"
+        if git rebase --abort 2>/dev/null; then
+            echo >&2 "The rebase was aborted, so the branch is unchanged."
+        fi
+        return 1
+    fi
+    rm -r "${tmpdir}"
 }
 
 # Whether the build_runner suite should run, given $opt_files.

@@ -158,9 +158,11 @@ the session wrote commits you want to send in a PR.
    and brings the conversation along. Then run the app as
    usual; see the [README](../../README.md).
 
-6. **Take authorship** of the commits, in that same checkout.
-   Neither teleporting nor `git cherry-pick` changes an author,
-   so amend each commit that's Claude's with `--reset-author`.
+6. **Take authorship** of the commits, with one command,
+   `tools/check --fix authorship`, which re-authors the ones
+   that are Claude's (neither teleporting nor `git cherry-pick`
+   changes an author), in the terminal where you teleported
+   the session.
 
 7. **Send the PR.** If the session opened a draft PR, mark it
    ready for review on GitHub once you'd stand behind it (per

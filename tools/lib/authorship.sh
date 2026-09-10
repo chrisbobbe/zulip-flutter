@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 #
-# Shared library for the authorship suite in tools/check.
+# Shared by the authorship suite in tools/check and by
+# tools/lib/reauthor-commit, the per-commit step of its --fix.
 
 # Emails that mark a commit as machine-authored; extend as needed.
 bot_emails=(

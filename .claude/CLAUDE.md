@@ -182,12 +182,17 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   and a session's commits are authored as Claude, with no
   responsible human author. A draft says so: it's a handoff,
   not a submission. After opening one, tell the user the rest
-  is theirs — teleport the session (`claude --teleport`), revise
-  and take authorship (with `--reset-author`), and mark the PR ready
-  for review. See docs/howto/claude-web.md ("Trust model").
+  is theirs: review, take authorship (`tools/check --fix authorship`,
+  after `claude --teleport`), and mark the PR ready for review.
+  See docs/howto/claude-web.md ("Trust model").
 
 
 ## Using Git
+
+- **Never run `tools/check --fix authorship` unprompted** —
+  it stamps the user's identity on Claude-authored commits,
+  and taking authorship is the user's own decision.
+  Run it only when the user asks for it, in that moment.
 
 - **Use `@` instead of `HEAD`** —
   there may be a stray file named `HEAD`,
