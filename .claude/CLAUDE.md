@@ -156,7 +156,8 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
 
   Never commit that hunk. Take it back out before committing
   any change to `pubspec.yaml`, and discard it
-  (`git checkout pubspec.yaml`) before finishing.
+  (`git checkout pubspec.yaml`) before finishing, and before
+  running `tools/check --fix authorship`.
   TODO(upstream): when that issue is fixed, drop this item, the
   libsqlite3-dev line in tools/provision-cloud, and the bullet
   in docs/howto/claude-web.md.
@@ -164,7 +165,8 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
 - **Don't commit `pubspec.lock` churn on Claude Code on the web.**
   The cached Flutter SDK drifts off the pin, and `flutter pub get`
   rewrites the lockfile to match; that isn't part of your change.
-  Discard it (`git checkout pubspec.lock`) before committing.
+  Discard it (`git checkout pubspec.lock`) before committing, and
+  before running `tools/check --fix authorship`.
 
 - **On Claude Code on the web, the GitHub API reaches only the
   session's own repo**, which is a fork of zulip/zulip-flutter.
@@ -183,8 +185,9 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   responsible human author. A draft says so: it's a handoff,
   not a submission. After opening one, tell the user the rest
   is theirs: review, take authorship (`tools/check --fix authorship`,
-  after `claude --teleport`), and mark the PR ready for review.
-  See docs/howto/claude-web.md ("Trust model").
+  run here at their request or after `claude --teleport`), and
+  mark the PR ready for review. See docs/howto/claude-web.md
+  ("Trust model").
 
 
 ## Using Git

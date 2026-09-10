@@ -83,7 +83,14 @@ web sessions on your fork, not on zulip/zulip-flutter.
      (Without the default list, the setup script fails with 403s
      from apt, the Ubuntu archives included.)
 
-   - **Environment variables**: none needed.
+   - **Environment variables**: optionally your name and email,
+     for taking authorship of commits from inside a session (see
+     [Session workflow](#session-workflow)), one per line:
+
+     ```text
+     ADOPT_AUTHOR_NAME=Your Name
+     ADOPT_AUTHOR_EMAIL=you@example.com
+     ```
 
    - **Setup script**: paste this one line:
 
@@ -147,7 +154,7 @@ the session wrote commits you want to send in a PR.
    request, but only ever a **draft** one: the commits are
    Claude's, and a draft says the work still needs a human (see
    [Trust model](#trust-model)). Taking it the rest of the way
-   is local, in the steps below.
+   is yours, in the steps below.
 
 5. **Test it yourself**, when the change calls for it. The
    cloud VM has no device or emulator, so this has to be done
@@ -161,8 +168,16 @@ the session wrote commits you want to send in a PR.
 6. **Take authorship** of the commits, with one command,
    `tools/check --fix authorship`, which re-authors the ones
    that are Claude's (neither teleporting nor `git cherry-pick`
-   changes an author), in the terminal where you teleported
-   the session.
+   changes an author). Either:
+
+   - in the terminal where you teleported the session; or
+   - from inside the session, with no terminal, by telling
+     the session to. For that to re-author the commits as you
+     rather than as Claude, first put your name and email in
+     the environment's variables as `ADOPT_AUTHOR_NAME` and
+     `ADOPT_AUTHOR_EMAIL` (see [One-time setup](#one-time-setup)).
+     Only that command reads them, so the session's other
+     commits stay Claude's.
 
 7. **Send the PR.** If the session opened a draft PR, mark it
    ready for review on GitHub once you'd stand behind it (per
