@@ -76,7 +76,9 @@ What tests to run:
               or the suite appearing as a positional argument.
 
 Extra things to do, or skip doing:
-  --fix       Fix issues found, where possible.
+  --fix       Fix issues found, where possible. Requires naming the
+              suite(s) to fix, so that no fix runs as a side effect
+              of a broad fix run.
   --no-pub    Tell \`flutter test\` et al. to skip \`flutter pub get\`.
 
 Modifying this script's output:
@@ -139,6 +141,12 @@ case "${opt_output}" in
     ci) opt_verbose=1;;
     *) usage;;
 esac
+
+if [ -n "${opt_fix}" ] && (( ! "${#opt_suites[@]}" )); then
+    echo >&2 "error: --fix requires naming the suite(s) to fix."
+    echo >&2
+    usage
+fi
 
 if (( ! "${#opt_suites[@]}" )); then
     if [ -n "${opt_all}" ]; then
