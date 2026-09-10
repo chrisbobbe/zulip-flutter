@@ -34,6 +34,12 @@ git_status_short()
     git status --short --untracked-files=normal -- "$@"
 }
 
+# Like git_status_short, but omitting untracked files.
+git_status_short_tracked()
+{
+    git status --short --untracked-files=no -- "$@"
+}
+
 # shellcheck disable=SC2120  # parameters are all optional
 check_no_uncommitted_or_untracked()
 {
@@ -45,24 +51,38 @@ check_no_uncommitted_or_untracked()
     else
         return 0
     fi
-    report_dirty_tree "$problem" "$@"
+    report_dirty_tree "$problem" normal "$@"
     return 1
 }
 
-# usage: report_dirty_tree PROBLEM [PATHS..]
+# Like check_no_uncommitted_or_untracked, but tolerating untracked files.
+# shellcheck disable=SC2120  # parameters are all optional
+check_no_uncommitted()
+{
+    no_uncommitted_changes "$@" && return 0
+    report_dirty_tree "uncommitted changes" no "$@"
+    return 1
+}
+
+# usage: report_dirty_tree PROBLEM UNTRACKED [PATHS..]
 #
-# Print, to stderr, the "aborting" report for
-# check_no_uncommitted_or_untracked. PROBLEM names what was found.
+# Print, to stderr, the "aborting" report the check_no_* functions
+# above share. PROBLEM names what was found; UNTRACKED, "normal" or
+# "no", says whether untracked files belong in the listing.
 report_dirty_tree()
 {
-    local problem="$1"; shift
+    local problem="$1" untracked="$2"; shift 2
     local qualifier=
     if (( $# )); then
         qualifier=" in $*"
     fi
     echo >&2 "There are ${problem}${qualifier}:"
     echo >&2
-    git_status_short "$@"
+    if [ "$untracked" = no ]; then
+        git_status_short_tracked "$@"
+    else
+        git_status_short "$@"
+    fi
     echo >&2
     echo >&2 "Aborting, to avoid losing your work."
 }
