@@ -321,7 +321,10 @@ void main() {
         await tester.pump();
         check(position.pixels - position.maxScrollExtent).equals(offset2);
         check(position).activity.isA<BallisticScrollActivity>()
-          .velocity.equals(0);
+          // Not exactly zero: on iOS the overscroll-recovery spring is stiff
+          // enough that evaluating it at t=0 leaves float-rounding residue.
+          //   https://github.com/flutter/flutter/pull/187568
+          .velocity.isCloseTo(0, 1e-6);
 
         // … and resume drifting from there…
         await tester.pump(Duration(milliseconds: 10));
