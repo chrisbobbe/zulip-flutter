@@ -18,7 +18,9 @@ this_dir=${BASH_SOURCE[0]%/*}
 
 ## CLI PARSING
 
-default_steps=(pod pub pub-major)
+# `icons` goes before `pub-major` so that when pub-major leaves a
+# draft commit, it's at the tip where its instructions say to amend it.
+default_steps=(pod pub icons pub-major)
 
 usage() {
     cat <<EOF
@@ -44,6 +46,14 @@ The steps are:
   pub         Upgrade pub packages within the constraints expressed
               in pubspec.yaml, then upgrade pods to match.
 
+  icons       Upgrade the NPM packages that tools/icons/build-icon-font
+              depends on, within the constraints expressed in
+              tools/icons/package.json, then rebuild the icon font.
+              If rebuilding changes the generated font or icon data,
+              the resulting commit is only a draft and requires
+              human review.  Releases beyond the constraints aren't
+              taken, but get flagged in the output.
+
   pub-major   Upgrade pub packages to latest, editing pubspec.yaml,
               then upgrade pods to match.  If there are any changes
               here, the resulting commit is only a draft and requires
@@ -53,16 +63,22 @@ Options:
 
   --no-pod    Skip running CocoaPods.  This is convenient for
               drafting a branch on Linux.
+
+  --no-icons  Skip running NPM.  This is convenient on a machine
+              without Node.js.
 EOF
 }
 
 opt_pod=y
+opt_icons=y
 opt_steps=()
 while (( $# )); do
     case "$1" in
         --no-pod)
             opt_pod=; shift;;
-        pod|flutter-local|pub|pub-major)
+        --no-icons)
+            opt_icons=; shift;;
+        pod|flutter-local|pub|icons|pub-major)
             opt_steps+=("$1"); shift;;
         --help) usage; exit 0;;
         *) usage >&2; exit 2;;
@@ -88,6 +104,18 @@ check_have_cocoapods() {
         echo >&2 "This script requires CocoaPods, in order to keep"
         echo >&2 "the CocoaPods lockfiles in sync with our \`pubspec.lock\`."
         echo >&2 "Try running it in a development environment on macOS."
+        return 1
+    fi
+}
+
+check_have_npm() {
+    [ -z "${opt_icons}" ] && return;
+
+    if ! type npm >/dev/null; then
+        echo >&2 "No \`npm\` command found."
+        echo >&2
+        echo >&2 "This script requires npm, in order to upgrade the NPM packages"
+        echo >&2 "that \`tools/icons/build-icon-font\` depends on."
         return 1
     fi
 }
@@ -313,7 +341,85 @@ EOF
     fi
 }
 
+upgrade_icons() {
+    if [ -z "${opt_icons}" ]; then
+        echo >&2
+        echo >&2 "npm update: WARNING: skipping because --no-icons"
+        return
+    fi
+
+    check_have_npm
+    check_no_uncommitted_or_untracked
+
+    # Check the generated outputs are current before upgrading, so that
+    # any changes after the upgrade can be attributed to the upgrade.
+    run_visibly tools/icons/build-icon-font
+    if ! no_uncommitted_changes; then
+        echo >&2 "There were changes caused by running \`tools/icons/build-icon-font\`:"
+        echo >&2
+        git_status_short
+        echo >&2
+        echo >&2 "This means the generated icon font was already out of date."
+        echo >&2 "Commit these changes separately, and then try \`tools/upgrade\` again."
+        return 1
+    fi
+
+    run_visibly npm --prefix tools/icons update --no-save --no-fund --no-audit
+
+    # In case the upgrade changed the font generator's output.
+    run_visibly tools/icons/build-icon-font
+
+    if no_uncommitted_changes; then
+        echo >&2 "npm update: No changes."
+    elif no_uncommitted_changes ':!tools/icons/package-lock.json'; then
+        git commit -a -m "\
+deps: Upgrade tools/icons NPM packages (tools/upgrade icons)
+"
+    else
+        # A change to the generated font needs review, so leave a draft to flag it.
+        git commit -a -m "\
+WIP deps: Upgrade tools/icons NPM packages, changing the icon font
+
+This is the result of \`tools/upgrade icons\`, and the upgrade changed
+the generated icon font.
+"
+
+        cat <<EOF
+
+Upgrading the NPM packages changed the generated icon font.
+
+The \`tools/upgrade\` script created a draft commit, but this requires
+review: a changed codepoint can silently point an icon at the wrong
+glyph.  Check the diff to \`lib/widgets/icons.dart\`, run the app to
+confirm the icons still render, and amend the commit when satisfied.
+EOF
+    fi
+
+    # TODO automate upgrades beyond the constraints, like pub-major;
+    #   for now, just flag them.  (After `npm update`, anything
+    #   `npm outdated` reports is beyond the constraints.)
+    local outdated
+    outdated=$(run_visibly npm --prefix tools/icons outdated) || true
+    if [ -n "${outdated}" ]; then
+        cat <<EOF
+
+Some packages have releases beyond the constraints in
+tools/icons/package.json:
+
+${outdated}
+
+Taking those upgrades isn't automated: edit package.json, run
+tools/icons/build-icon-font, review the changes, and commit.
+EOF
+    fi
+}
+
 divider_line='================================================================'
+
+# Fail fast on a missing tool, before earlier steps do their work.
+if [[ " ${opt_steps[*]} " == *" icons "* ]]; then
+    check_have_npm
+fi
 
 for step in "${opt_steps[@]}"; do
     echo
@@ -323,6 +429,7 @@ for step in "${opt_steps[@]}"; do
         pod)       upgrade_pod ;;
         flutter-local) upgrade_flutter_local ;;
         pub)       upgrade_pub ;;
+        icons)     upgrade_icons ;;
         pub-major) upgrade_pub_major ;;
         *)   echo >&2 "Internal error: unknown step ${step}" ;;
     esac
