@@ -638,6 +638,7 @@ class _ContentInput extends StatelessWidget {
                 minLines: 2,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
+                spellCheckConfiguration: const SpellCheckConfiguration(),
                 decoration: InputDecoration(
                   hintText: hintText,
                   hintStyle: TextStyle(
