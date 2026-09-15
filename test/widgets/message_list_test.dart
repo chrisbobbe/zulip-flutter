@@ -2328,10 +2328,22 @@ void main() {
         case MessageTimestampStyle.timeOnly:
           doTests(style, [('2023-01-10 12:00', '12:00\u{202F}PM', '12:00')]);
         case MessageTimestampStyle.lightbox:
+          final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
           doTests(style,
-            [('2023-01-10 12:00',
-              'Jan 10, 2023 12:00:00\u{202F}PM',
-              'Jan 10, 2023 12:00:00')]);
+            now: DateTime.parse("2023-01-10 12:00"),
+            [
+              // Today: uses ZulipLocalizations.today, deterministic.
+              ("2023-01-10 12:00",
+                '${zulipLocalizations.today} at 12:00:00\u{202F}PM',
+                '${zulipLocalizations.today} at 12:00:00'),
+              // Yesterday: uses ZulipLocalizations.yesterday, deterministic.
+              ("2023-01-09 12:00",
+                '${zulipLocalizations.yesterday} at 12:00:00\u{202F}PM',
+                '${zulipLocalizations.yesterday} at 12:00:00'),
+              // TODO(#45) cover the icu4x-formatted this-year and prior-year
+              //   cases once we know the exact icu4x output for en-US medium
+              //   (needs an on-device run first).
+            ]);
         case MessageTimestampStyle.full:
           doTests(style,
             [('2023-01-10 12:00',

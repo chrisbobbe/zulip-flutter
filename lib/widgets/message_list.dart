@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_color_models/flutter_color_models.dart';
+import 'package:icu4x/icu4x.dart' as icu4x;
 import 'package:intl/intl.dart' hide TextDirection;
 
 import '../api/model/model.dart';
@@ -2293,6 +2294,47 @@ enum MessageTimestampStyle {
     TwentyFourHourTimeMode.localeDefault => _timeFormatLocaleDefaultWithSeconds,
   };
 
+  // Experimental icu4x-based lightbox formatter for #45.
+  // Missing pieces vs. the issue: localized " at " connector, relative-today
+  // format ("N minutes ago"), tooltip, and the periodic rebuild.
+  static String _formatLightbox(
+    DateTime dateTime, {
+    required DateTime now,
+    required ZulipLocalizations zulipLocalizations,
+    required TwentyFourHourTimeMode twentyFourHourTimeMode,
+  }) {
+    assert(!dateTime.isUtc && !now.isUtc,
+      '`dateTime` and `now` need to be in local time.');
+
+    final String datePart;
+    if (dateTime.year == now.year
+        && dateTime.month == now.month
+        && dateTime.day == now.day) {
+      datePart = zulipLocalizations.today;
+    } else {
+      final yesterday = now
+        .copyWith(hour: 12, minute: 0, second: 0, millisecond: 0, microsecond: 0)
+        .add(const Duration(days: -1));
+      if (dateTime.year == yesterday.year
+          && dateTime.month == yesterday.month
+          && dateTime.day == yesterday.day) {
+        datePart = zulipLocalizations.yesterday;
+      } else {
+        final locale = icu4x.Locale.fromString(
+          Intl.getCurrentLocale().replaceAll('_', '-'));
+        final formatter = (dateTime.year == now.year && dateTime.isBefore(now))
+          ? icu4x.DateFormatter.md(locale, length: icu4x.DateTimeLength.medium)
+          : icu4x.DateFormatter.ymd(locale, length: icu4x.DateTimeLength.medium);
+        datePart = formatter.formatIso(
+          icu4x.IsoDate(dateTime.year, dateTime.month, dateTime.day));
+      }
+    }
+
+    final timePart = _resolveTimeFormatWithSeconds(twentyFourHourTimeMode)
+      .format(dateTime);
+    return '$datePart at $timePart';
+  }
+
   /// Format a [Message.timestamp] for this mode.
   // TODO(i18n): locale-specific formatting (see #45 for a plan with ffi)
   String? format(
@@ -2311,10 +2353,10 @@ enum MessageTimestampStyle {
       case timeOnly:
         return _resolveTimeFormat(twentyFourHourTimeMode).format(asDateTime);
       case lightbox:
-        return DateFormat
-          .yMMMd()
-          .addPattern(_resolveTimeFormatWithSeconds(twentyFourHourTimeMode).pattern)
-          .format(asDateTime);
+        return _formatLightbox(asDateTime,
+          now: now,
+          zulipLocalizations: zulipLocalizations,
+          twentyFourHourTimeMode: twentyFourHourTimeMode);
       case full:
         return DateFormat
           .yMMMd()

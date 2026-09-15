@@ -57,6 +57,10 @@ dependencies:
   html: ^0.15.1
   http: ^1.0.0
   http_parser: ^4.0.2
+  # Experimental use for #45; see how the on-device build behaves.
+  # Held at ^2.3.0 for now: 2.3.1+ needs code_assets ^2, incompatible with
+  # sodium 4.x's own code_assets pin.
+  icu4x: ^2.3.0
   image_picker: ^1.0.0
   image_picker_android: ^0.8.13+14
   image_picker_platform_interface: ^2.11.1
