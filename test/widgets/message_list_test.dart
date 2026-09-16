@@ -2297,7 +2297,8 @@ void main() {
                 timestamp,
                 now: testBinding.utcNow().toLocal(),
                 twentyFourHourTimeMode: mode,
-                zulipLocalizations: zulipLocalizations);
+                zulipLocalizations: zulipLocalizations,
+                locale: const Locale('en', 'US'));
               check(result).equals(expected);
             });
           });

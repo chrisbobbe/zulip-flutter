@@ -2105,6 +2105,7 @@ class DateText extends StatelessWidget {
     final formattedTimestamp = MessageTimestampStyle.dateOnlyRelative.format(
       timestamp,
       now: ZulipBinding.instance.utcNow().toLocal(),
+      locale: Localizations.localeOf(context),
       twentyFourHourTimeMode: store.userSettings.twentyFourHourTime,
       zulipLocalizations: zulipLocalizations)!;
     return Text(
@@ -2151,7 +2152,8 @@ class SenderRow extends StatelessWidget {
       .format(message.timestamp,
         now: DateTime.now(),
         twentyFourHourTimeMode: store.userSettings.twentyFourHourTime,
-        zulipLocalizations: zulipLocalizations);
+        zulipLocalizations: zulipLocalizations,
+        locale: Localizations.localeOf(context));
 
     final showAsMuted = _showAsMuted(context, store);
 
@@ -2301,6 +2303,7 @@ enum MessageTimestampStyle {
     DateTime dateTime, {
     required DateTime now,
     required ZulipLocalizations zulipLocalizations,
+    required Locale locale,
     required TwentyFourHourTimeMode twentyFourHourTimeMode,
   }) {
     assert(!dateTime.isUtc && !now.isUtc,
@@ -2320,11 +2323,10 @@ enum MessageTimestampStyle {
           && dateTime.day == yesterday.day) {
         datePart = zulipLocalizations.yesterday;
       } else {
-        final locale = icu4x.Locale.fromString(
-          Intl.getCurrentLocale().replaceAll('_', '-'));
+        final icuLocale = icu4x.Locale.fromString(locale.toLanguageTag());
         final formatter = (dateTime.year == now.year && dateTime.isBefore(now))
-          ? icu4x.DateFormatter.md(locale, length: icu4x.DateTimeLength.medium)
-          : icu4x.DateFormatter.ymd(locale, length: icu4x.DateTimeLength.medium);
+          ? icu4x.DateFormatter.md(icuLocale, length: icu4x.DateTimeLength.medium)
+          : icu4x.DateFormatter.ymd(icuLocale, length: icu4x.DateTimeLength.medium);
         datePart = formatter.formatIso(
           icu4x.IsoDate(dateTime.year, dateTime.month, dateTime.day));
       }
@@ -2341,6 +2343,7 @@ enum MessageTimestampStyle {
     int messageTimestamp, {
     required DateTime now,
     required ZulipLocalizations zulipLocalizations,
+    required Locale locale,
     required TwentyFourHourTimeMode twentyFourHourTimeMode,
   }) {
     final asDateTime = dateTimeFromTimestamp(messageTimestamp);
@@ -2356,6 +2359,7 @@ enum MessageTimestampStyle {
         return _formatLightbox(asDateTime,
           now: now,
           zulipLocalizations: zulipLocalizations,
+          locale: locale,
           twentyFourHourTimeMode: twentyFourHourTimeMode);
       case full:
         return DateFormat

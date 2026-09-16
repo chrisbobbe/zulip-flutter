@@ -184,7 +184,8 @@ class _LightboxPageLayoutState extends State<_LightboxPageLayout> {
         .format(widget.message.timestamp,
           now: DateTime.now(),
           twentyFourHourTimeMode: store.userSettings.twentyFourHourTime,
-          zulipLocalizations: zulipLocalizations);
+          zulipLocalizations: zulipLocalizations,
+          locale: Localizations.localeOf(context));
 
       // We use plain [AppBar] instead of [ZulipAppBar], even though this page
       // has a [PerAccountStore], because:
