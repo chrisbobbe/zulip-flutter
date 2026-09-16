@@ -413,7 +413,6 @@ class _MainMenu extends StatelessWidget {
       _DirectMessagesButton(tabNotifier: tabNotifier),
       // TODO(#1094): Users
       const _MyProfileButton(),
-      // TODO(#198): Set my status
       // const SizedBox(height: 8),
       const _SettingsButton(),
       // TODO(#661): Notifications
