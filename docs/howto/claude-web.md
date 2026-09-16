@@ -83,6 +83,22 @@ web sessions on your fork, not on zulip/zulip-flutter.
      (Without the default list, the setup script fails with 403s
      from apt, the Ubuntu archives included.)
 
+     Add these three as well if you want sessions to be able to
+     provision a Zulip dev server (see
+     [Running a dev server](#running-a-dev-server-in-a-session)).
+     `tools/provision` in `../zulip` reaches all three while
+     setting up apt, and gives up if any of them 403s:
+
+     - `apt.postgresql.org`, the PGDG repo;
+     - `packages.groonga.org`, which serves the package that
+       adds the pgroonga repo;
+     - `ppa.launchpadcontent.net`, the libheif PPA.
+
+     The last is worth adding either way: the base image ships
+     its own PPAs on that host, and their 403s are why
+     `tools/provision-cloud` has to tolerate `apt-get update`
+     exiting nonzero.
+
    - **Environment variables**: none needed.
 
    - **Setup script**: paste this one line:
@@ -198,10 +214,17 @@ the session wrote commits you want to send in a PR.
   it into the session. Details: [claude-code#78277][cc-78277].
 
 - `flutter test` needs a workaround, which Claude applies on its
-  own: the proxy blocks one package's download of a prebuilt
-  library ([claude-code#78330][cc-78330]), so CLAUDE.md has
-  Claude use the system library instead, via a pubspec.yaml
-  edit it keeps out of commits.
+  own: one package's download of a prebuilt library is refused
+  ([claude-code#78330][cc-78330]), so CLAUDE.md has Claude use
+  the system library instead, via a pubspec.yaml edit it keeps
+  out of commits.
+
+  Adding a domain to the environment won't fix this one. The
+  download comes from a GitHub release, on
+  `simolus3/sqlite3.dart`, and what refuses it is the GitHub
+  scoping proxy rather than the egress allowlist: it answers
+  "GitHub access to this repository is not enabled for this
+  session", as it does for any repo but the session's own.
 
 [cc-78277]: https://github.com/anthropics/claude-code/issues/78277
 [cc-78330]: https://github.com/anthropics/claude-code/issues/78330
@@ -304,27 +327,30 @@ it's worth doing only when live-server testing is the point.
 
 Use the [Vagrant-less direct install][provision-direct], since
 the session VM is already the disposable sandbox that Vagrant
-would otherwise provide. Five things differ from a normal
+would otherwise provide. Set up the environment's allowed
+domains first, as above; with those in place `tools/provision`
+runs unmodified, and only four things differ from a normal
 direct install:
 
 - **Provision refuses to run as root**, and sessions run as
   root; make a normal user and give it the checkout.
 - **There's no systemd.** Set `GITHUB_ACTIONS=true` so
   provision starts postgres/redis/memcached/rabbitmq with
-  plain `service` commands, as Zulip's own CI does.
-- **Some package hosts are blocked** by the network proxy:
-  `apt.postgresql.org`, `packages.groonga.org`, and
-  `ppa.launchpadcontent.net`. Noble's own postgresql-16 is
-  the version provision wants anyway, the groonga PPA already
-  carries `postgresql-16-pgroonga`, and the launchpadcontent
-  PPAs are reachable under the older `ppa.launchpad.net` name.
+  plain `service` commands, as Zulip's own CI does. That's
+  the flag's only effect on provision.
 - **The egress gateway serves its own TLS certificate**, which
   breaks pnpm and uv until each is pointed at the system trust
   store that already holds the gateway's CA: set
   `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` and
   `UV_SYSTEM_CERTS=1`.
 - **The VM has no IPv6**, so memcached's default
-  `-l 127.0.0.1,::1` leaves it dead; bind it to IPv4 only.
+  `-l 127.0.0.1,::1` leaves it dead — while its init script
+  still reports it running, from a stale pidfile. Bind it to
+  IPv4 only, or Django 500s on every cache read.
+
+Don't point apt at the egress proxy: it reaches the archives
+on its own, and setting `Acquire::http::Proxy` makes the proxy
+answer plain-http archive.ubuntu.com with 405s.
 
 Then `tools/run-dev` serves on `localhost:9991`, with realms
 at the hostname-derived names in `/api/v1/dev_list_users`
