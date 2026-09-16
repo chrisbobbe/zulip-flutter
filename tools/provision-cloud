@@ -44,6 +44,10 @@ echo "==> Installing system packages"
 #   system library, which this provides.
 # build-essential: for native-assets builds in `flutter test`;
 #   package:sodium's build hook compiles libsodium.
+# openjdk-21-jdk-headless: for Gradle, in the Android build.  The
+#   image already ships this version (observed 2026-09); naming it
+#   here makes the dependency explicit.  On the choice of version,
+#   see the Android SDK section below.
 # ShellCheck: for the `shellcheck` suite in tools/check, which CI runs.
 #   (Capitalized because a comment starting `# shellcheck` is a directive.)
 #
@@ -57,7 +61,7 @@ echo "==> Installing system packages"
 run_visibly apt-get update || true
 run_visibly apt-get install -y \
     curl git unzip xz-utils zip libsqlite3-dev build-essential \
-    shellcheck
+    openjdk-21-jdk-headless shellcheck
 
 echo "==> Cloning the Flutter SDK"
 # Sessions run as root, the same user as this script (empirically,
@@ -71,6 +75,71 @@ clone_flutter_sdk "$flutter_tree"
 # symlinks to find their SDK tree.
 run_visibly ln -sf "$flutter_tree"/bin/flutter /usr/local/bin/flutter
 run_visibly ln -sf "$flutter_tree"/bin/dart /usr/local/bin/dart
+
+echo "==> Installing the Android SDK"
+# For `flutter build apk` and `tools/gradle`, hence `tools/check android`.
+#
+# Needs dl.google.com among the environment's allowed domains: it
+# serves both the SDK repository and, after a redirect from
+# maven.google.com, Google's Maven repo, which the Android Gradle
+# plugin and androidx come from.  The default list of common package
+# managers doesn't cover it.  See docs/howto/claude-web.md.
+#
+# The platform and NDK versions follow the Flutter SDK's own defaults,
+# in packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt;
+# update them when Flutter does.  The NDK is needed because
+# package:sodium's build hook compiles libsodium for each Android ABI.
+#
+# The cmdline-tools build number and checksum come from the "Command
+# line tools only" row at https://developer.android.com/studio .
+android_sdk=~/android-sdk
+cmdline_tools_build=15859902
+cmdline_tools_sha256=4e4c464f145a7512b57d088ac6c278c03c9eea610886b35a5e0804e74eedf583
+cmdline_tools_url=https://dl.google.com/android/repository/commandlinetools-linux-${cmdline_tools_build}_latest.zip
+cmdline_tools_dir=$(mktemp -d)
+run_visibly curl -fsSL -o "$cmdline_tools_dir"/cmdline-tools.zip "$cmdline_tools_url"
+echo "$cmdline_tools_sha256  $cmdline_tools_dir/cmdline-tools.zip" | sha256sum --check
+run_visibly mkdir -p "$android_sdk"/cmdline-tools
+run_visibly unzip -q "$cmdline_tools_dir"/cmdline-tools.zip -d "$android_sdk"/cmdline-tools
+run_visibly rm -rf "$cmdline_tools_dir"
+# sdkmanager finds the SDK root by walking up from its own path, which
+# has to be <root>/cmdline-tools/<channel>/bin/; the zip unpacks as
+# plain `cmdline-tools/`.
+run_visibly mv "$android_sdk"/cmdline-tools/cmdline-tools \
+    "$android_sdk"/cmdline-tools/latest
+sdkmanager="$android_sdk"/cmdline-tools/latest/bin/sdkmanager
+
+# `yes` dies of SIGPIPE once sdkmanager stops reading, and with
+# `set -o pipefail` that would abort this script.
+yes | "$sdkmanager" --licenses >/dev/null || true
+
+run_visibly "$sdkmanager" platform-tools \
+    'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358'
+
+# Record the SDK path where both the Flutter tool and package:sodium's
+# build hook look for it: ~/.config/flutter/settings, which the
+# snapshot carries into sessions.  No environment variable needed --
+# and none would work, as sessions don't inherit this script's.  The
+# flutter tool passes the path to Gradle as sdk.dir in
+# android/local.properties at build time.
+run_visibly flutter config --android-sdk "$android_sdk"
+
+# Leave the versions in the setup log: when a build here and one in CI
+# disagree, these are the first things to compare.
+run_visibly "$sdkmanager" --list_installed
+# Gradle runs on the image's JDK, found via the JAVA_HOME that sessions
+# get preset; CI's android job uses Temurin 17
+# (.github/workflows/ci.yml).  This script can't pin that version:
+# sessions don't inherit its environment, and android/gradlew prefers
+# JAVA_HOME over PATH, so it would take a JAVA_HOME in the
+# environment's own variables.
+run_visibly java -version
+
+# Deliberately no warming of ~/.gradle: `tools/check android` runs only
+# on branches that touch android/, so most sessions would never use the
+# cache, while warming it costs a multi-minute build in every rebuild of
+# the environment cache.  Sessions that do build download Gradle and the
+# Android dependencies themselves.
 
 echo "==> Downloading Flutter artifacts and pub dependencies"
 # Do this here to warm the pub cache: downloads made during a

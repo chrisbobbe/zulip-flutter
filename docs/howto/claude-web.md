@@ -66,18 +66,23 @@ web sessions on your fork, not on zulip/zulip-flutter.
    - **Name**: something you'll recognize in that selector,
      such as `zulip-flutter`.
 
-     The script runs once per build of the environment's cache,
-     which takes about three minutes (observed 2026-09): at your
-     first session in the environment, and again whenever the
-     cache expires, roughly weekly. Sessions in between start in
-     seconds.
+     The script runs once per build of the environment's cache:
+     at your first session in the environment, and again whenever
+     the cache expires, roughly weekly. Sessions in between start
+     in seconds. It took about three minutes before the Android
+     SDK was added (observed 2026-09); expect several minutes more
+     now, mostly for the NDK.
 
    - **Network access**: "Custom", with "Also include default
-     list of common package managers" checked, and two allowed
+     list of common package managers" checked, and three allowed
      domains:
 
      - `chat.zulip.org`, for reading chat threads linked from
        issues and PRs;
+     - `dl.google.com`, for the Android SDK and for Google's
+       Maven repo, which the Android build resolves the Android
+       Gradle plugin and androidx from. The default list doesn't
+       cover it, and without it the setup script fails.
      - `zulip.com`, for reading API docs.
 
      (Without the default list, the setup script fails with 403s
@@ -92,10 +97,10 @@ web sessions on your fork, not on zulip/zulip-flutter.
      ```
 
      (If your fork isn't named `zulip-flutter`, adjust the path
-     to match.) The script installs the system packages and the
-     Flutter SDK, warms the pub cache, and clones the Zulip
-     server repo to `../zulip` and the legacy mobile app's to
-     `../zulip-mobile`.
+     to match.) The script installs the system packages, the
+     Flutter SDK and the Android SDK, warms the pub cache, and
+     clones the Zulip server repo to `../zulip` and the legacy
+     mobile app's to `../zulip-mobile`.
 
 [upstream-repo]: https://github.com/zulip/zulip-flutter
 [fork-a-repo]: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo
@@ -181,6 +186,15 @@ the session wrote commits you want to send in a PR.
 - The VM has no device or emulator, so the app can't be run
   there. Manual testing means teleporting the branch to your
   machine; see the [session workflow](#session-workflow).
+
+- Android builds do work, so `tools/check android` runs here.
+  (iOS builds need macOS, so the `ios` suite skips itself.) One
+  caveat: Gradle runs on the image's OpenJDK 21, while CI's
+  android job uses Temurin 17. `tools/provision-cloud` can't pin
+  that, since sessions don't inherit its environment and
+  `android/gradlew` prefers the `JAVA_HOME` they get preset. So
+  when a build here and one in CI disagree, check the JDK first;
+  the setup log records it.
 
 - The VM's network is allowlisted: commands Claude runs there
   reach the default package registries, GitHub, and the domains
