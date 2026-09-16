@@ -847,7 +847,7 @@ void main() {
       final channel = eg.stream(topicsPolicy: .allowEmptyTopic);
 
       Future<void> changePolicy(ChannelTopicsPolicy value) async {
-        await store.handleEvent(eg.channelUpdateEvent(store.streams[channel.streamId]!,
+        await store.handleEvent(eg.channelUpdateEvent(store.channels[channel.streamId]!,
           property: ChannelPropertyName.topicsPolicy, value: value));
         await tester.pump();
       }
@@ -877,7 +877,7 @@ void main() {
       check(state).controller.isA<StreamComposeBoxController>()
         .topic.text.equals('some topic');
 
-      await store.handleEvent(eg.channelUpdateEvent(store.streams[channel.streamId]!,
+      await store.handleEvent(eg.channelUpdateEvent(store.channels[channel.streamId]!,
         property: ChannelPropertyName.topicsPolicy,
         value: ChannelTopicsPolicy.emptyTopicOnly));
       await tester.pump(Duration.zero);
@@ -2120,7 +2120,7 @@ void main() {
         // new store has the same boring data, in order to present a compose box
         // that allows composing, instead of a no-posting-permission banner
         ..accountId.equals(store.accountId)
-        ..streams.containsKey(channel.streamId);
+        ..channels.containsKey(channel.streamId);
 
       checkContentInputValue(tester, 'some content');
     });
@@ -2150,7 +2150,7 @@ void main() {
       check(state).controller.isA<StreamComposeBoxController>()
         .topic.text.equals('some topic');
 
-      await newStore.handleEvent(eg.channelUpdateEvent(newStore.streams[channel.streamId]!,
+      await newStore.handleEvent(eg.channelUpdateEvent(newStore.channels[channel.streamId]!,
         property: ChannelPropertyName.topicsPolicy,
         value: ChannelTopicsPolicy.emptyTopicOnly));
       await tester.pump(Duration.zero);
@@ -2326,7 +2326,7 @@ void main() {
         ..topic.text.equals('topic before restoring')
         ..content.text.isNotNull().isEmpty();
 
-      await store.handleEvent(eg.channelUpdateEvent(store.streams[channel.streamId]!,
+      await store.handleEvent(eg.channelUpdateEvent(store.channels[channel.streamId]!,
         property: ChannelPropertyName.topicsPolicy,
         value: ChannelTopicsPolicy.emptyTopicOnly));
       await tester.pump(Duration.zero);
