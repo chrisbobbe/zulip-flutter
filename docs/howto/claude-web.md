@@ -99,7 +99,11 @@ web sessions on your fork, not on zulip/zulip-flutter.
      `tools/provision-cloud` has to tolerate `apt-get update`
      exiting nonzero.
 
-   - **Environment variables**: none needed.
+   - **Environment variables**: none needed for ordinary work.
+     Set `ZULIP_DEV_SERVER=1` to have the setup script provision
+     a Zulip dev server (see
+     [Running a dev server](#running-a-dev-server-in-a-session)),
+     along with the three allowed domains above.
 
    - **Setup script**: paste this one line:
 
@@ -329,7 +333,7 @@ Use the [Vagrant-less direct install][provision-direct], since
 the session VM is already the disposable sandbox that Vagrant
 would otherwise provide. Set up the environment's allowed
 domains first, as above; with those in place `tools/provision`
-runs unmodified, and only four things differ from a normal
+runs unmodified, and only three things differ from a normal
 direct install:
 
 - **Provision refuses to run as root**, and sessions run as
@@ -338,11 +342,6 @@ direct install:
   provision starts postgres/redis/memcached/rabbitmq with
   plain `service` commands, as Zulip's own CI does. That's
   the flag's only effect on provision.
-- **The egress gateway serves its own TLS certificate**, which
-  breaks pnpm and uv until each is pointed at the system trust
-  store that already holds the gateway's CA: set
-  `NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt` and
-  `UV_SYSTEM_CERTS=1`.
 - **The VM has no IPv6**, so memcached's default
   `-l 127.0.0.1,::1` leaves it dead — while its init script
   still reports it running, from a stale pidfile. Bind it to
