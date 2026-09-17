@@ -2328,8 +2328,14 @@ ZulipContent parseContent(String html) {
   return _ZulipContentParser().parse(html);
 }
 
-ZulipMessageContent parseMessageContent(Message message) {
+/// Parse [message]'s content for display.
+///
+/// If [matchContent] is non-null, it's parsed in place of [Message.content].
+/// That's the search-highlighted form of the content,
+/// with the search keywords' matches wrapped in [HighlightNode]s;
+/// see [Message.matchContent].
+ZulipMessageContent parseMessageContent(Message message, {String? matchContent}) {
   final poll = message.poll;
   if (poll != null) return PollContent(poll);
-  return parseContent(message.content);
+  return parseContent(matchContent ?? message.content);
 }
