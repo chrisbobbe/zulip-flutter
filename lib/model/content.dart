@@ -1249,6 +1249,14 @@ class GlobalTimeNode extends InlineContentNode {
   }
 }
 
+/// A search-keyword match in message content,
+/// from the server's `match_content` field.
+///
+/// See [Message.matchContent].
+class HighlightNode extends InlineContainerNode {
+  const HighlightNode({super.debugHtmlNode, required super.nodes});
+}
+
 ImageNodeSrc? _tryParseImgSrc(dom.Element imgElement) {
   final src = imgElement.attributes['src'];
   if (src == null) return null;
@@ -1522,6 +1530,10 @@ class _ZulipInlineContentParser {
       return GlobalTimeNode(datetime: datetime, debugHtmlNode: debugHtmlNode);
     }
 
+    if (localName == 'span' && className == 'highlight') {
+      return HighlightNode(nodes: nodes(), debugHtmlNode: debugHtmlNode);
+    }
+
     if (localName == 'audio' && className.isEmpty) {
       final srcAttr = element.attributes['src'];
       if (srcAttr == null) return unimplemented();
@@ -1678,6 +1690,9 @@ class _ZulipContentParser {
 
           switch (spanType) {
             case null:
+              // This includes the `highlight` class, which the server puts on
+              // search-keyword matches; see [HighlightNode].
+              // TODO(#1695) handle search-keyword matches in code blocks
               // TODO(#194): Show these as un-syntax-highlighted code, in production.
               return UnimplementedBlockContentNode(htmlNode: divElement);
             case CodeBlockSpanType.highlightedLines:
