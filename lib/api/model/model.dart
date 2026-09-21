@@ -925,6 +925,12 @@ class Subscription extends ZulipStream {
 enum SubscriptionProperty {
   /// As an int that dart:ui's Color constructor will take:
   ///   <https://api.flutter.dev/flutter/dart-ui/Color/Color.html>
+  ///
+  /// That's the form we read this property in,
+  /// converting from the `#rrggbb` string the server sends;
+  /// see [Subscription.color] and [SubscriptionUpdateEvent.value].
+  /// To write it with [updateSubscriptionSettings],
+  /// pass the `#rrggbb` string instead.
   color,
 
   isMuted,

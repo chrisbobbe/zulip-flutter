@@ -41,6 +41,14 @@ Future<void> unsubscribeFromChannel(ApiConnection connection, {
 }
 
 /// https://zulip.com/api/update-subscription-settings
+///
+/// [value] must have the type the server expects for [property]:
+/// `bool` for the boolean settings,
+/// and for [SubscriptionProperty.color], a string in `#rrggbb` form.
+/// In particular, the color is not passed as the int
+/// that [Subscription.color] holds; nothing here converts between the two.
+// TODO make this type-safe, so callers can't pass a value
+//   of the wrong type for the property
 Future<void> updateSubscriptionSettings(ApiConnection connection, {
   required int streamId,
   required SubscriptionProperty property,
