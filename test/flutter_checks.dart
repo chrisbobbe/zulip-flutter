@@ -82,6 +82,7 @@ extension BoxDecorationChecks on Subject<BoxDecoration> {
 extension TextStyleChecks on Subject<TextStyle> {
   Subject<bool> get inherit => has((t) => t.inherit, 'inherit');
   Subject<Color?> get color => has((t) => t.color, 'color');
+  Subject<Color?> get backgroundColor => has((t) => t.backgroundColor, 'backgroundColor');
   Subject<double?> get fontSize => has((t) => t.fontSize, 'fontSize');
   Subject<FontStyle?> get fontStyle => has((t) => t.fontStyle, 'fontStyle');
   Subject<FontWeight?> get fontWeight => has((t) => t.fontWeight, 'fontWeight');

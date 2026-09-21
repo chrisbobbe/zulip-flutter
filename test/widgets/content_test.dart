@@ -1704,6 +1704,21 @@ void main() {
     });
   });
 
+  group('highlight (for search)', () {
+    testContentSmoke(ContentExample.highlight);
+
+    testWidgets('background color', (tester) async {
+      await prepareContent(tester, plainContent(
+        '<p>no match, <span class="highlight">keyword</span></p>'));
+      final contentTheme = ContentTheme.of(tester.element(find.byType(Paragraph)));
+
+      check(mergedStyleOf(tester, 'keyword')!)
+        .backgroundColor.equals(contentTheme.colorHighlightBackground);
+      check(mergedStyleOf(tester, 'no match, ')!)
+        .backgroundColor.isNull();
+    });
+  });
+
   group('InlineAudio', () {
     Future<void> prepare(WidgetTester tester, String html) async {
       await prepareContent(tester, plainContent(html),
