@@ -161,6 +161,17 @@ UI designs come from Figma (linked in issues). Match colors, padding, and font s
   libsqlite3-dev line in tools/provision-cloud, and the bullet
   in docs/howto/claude-web.md.
 
+- **Android builds work here**, so `tools/check android` and
+  `flutter build apk` run normally, using the SDK that
+  tools/provision-cloud installs at `~/android-sdk`. The first
+  such build in a session downloads Gradle and the Android
+  dependencies, taking several minutes; that's expected, not a
+  hang. Gradle runs on the image's OpenJDK 21, while CI's
+  `android` job uses Temurin 17. If a build gets a 403 for
+  `dl.google.com`, the environment is missing that allowed
+  domain: say so rather than working around it.
+  See docs/howto/claude-web.md.
+
 - **Don't commit `pubspec.lock` churn on Claude Code on the web.**
   The cached Flutter SDK drifts off the pin, and `flutter pub get`
   rewrites the lockfile to match; that isn't part of your change.
