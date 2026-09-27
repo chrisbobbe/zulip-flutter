@@ -162,23 +162,22 @@ void main() {
           case [var otherUserId]: // 1:1
             check(shape).child.isA<AvatarImage>().userId.equals(otherUserId);
           default:                // group
-            // TODO(#232): syntax like `check(find(…), findsOneWidget)`
-            tester.widget(find.descendant(
+            check(find.descendant(
               of: find.byWidget(shape.child),
               matching: find.byIcon(ZulipIcons.group_dm_3),
-            ));
+            )).findsOne();
         }
       }
 
       void checkTitle(WidgetTester tester, String expectedText, [int? expectedLines]) {
-        // TODO(#232): syntax like `check(find(…), findsOneWidget)`
-        final widget = tester.widget(find.descendant(
+        final finder = find.descendant(
           of: find.byType(RecentDmConversationsItem),
           // The title might contain a WidgetSpan (for status emoji); exclude
           // the resulting placeholder character from the text to be matched.
-          matching: findText(expectedText, includePlaceholders: false)));
+          matching: findText(expectedText, includePlaceholders: false));
+        check(finder).findsOne();
         if (expectedLines != null) {
-          final renderObject = tester.renderObject<RenderParagraph>(find.byWidget(widget));
+          final renderObject = tester.renderObject<RenderParagraph>(finder);
           check(renderObject.size.height).equals(
             20.0 // line height
             * expectedLines);
