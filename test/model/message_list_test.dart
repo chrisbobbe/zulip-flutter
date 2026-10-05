@@ -3680,6 +3680,70 @@ void main() {
     });
   });
 
+  group('search-keyword highlighting', () {
+    final narrow = KeywordSearchNarrow('keyword');
+
+    String content(int id) => '<p>message $id with keyword</p>';
+    String matchContent(int id) =>
+      '<p>message $id with <span class="highlight">keyword</span></p>';
+
+    Message message(int id) => eg.streamMessage(id: id,
+      content: content(id), matchContent: matchContent(id));
+
+    void checkContent(ZulipMessageContent actual, String html) {
+      check(actual).isA<ZulipContent>().equalsNode(parseContent(html));
+    }
+
+    test('fetchInitial', () async {
+      await prepare(narrow: narrow);
+      await prepareMessages(foundOldest: true, messages: [message(100)]);
+      checkContent(model.contents.single, matchContent(100));
+    });
+
+    test('fetchOlder', () async {
+      await prepare(narrow: narrow);
+      await prepareMessages(foundOldest: false, messages: [message(1000)]);
+
+      connection.prepare(json: olderResult(anchor: 1000, foundOldest: true,
+        messages: [message(900)]).toJson());
+      await model.fetchOlder();
+      checkNotified(count: 2);
+      checkContent(model.contents.first, matchContent(900));
+    });
+
+    test('fetchNewer', () async {
+      await prepare(narrow: narrow, anchor: NumericAnchor(1000));
+      await prepareMessages(foundOldest: true, foundNewest: false,
+        messages: [message(1000)]);
+
+      connection.prepare(json: newerResult(anchor: 1000, foundNewest: true,
+        messages: [message(1100)]).toJson());
+      await model.fetchNewer();
+      checkNotified(count: 2);
+      checkContent(model.contents.last, matchContent(1100));
+    });
+
+    test('no highlighting outside a keyword-search narrow', () async {
+      // The server sends match fields only for a search narrow;
+      // if it sent them anyway, we'd ignore them.
+      await prepare(narrow: const CombinedFeedNarrow());
+      await prepareMessages(foundOldest: true, messages: [message(100)]);
+      check(model.matchContentByMessageId).isEmpty();
+      checkContent(model.contents.single, content(100));
+    });
+
+    test('content edited: drop the stale highlighting', () async {
+      await prepare(narrow: narrow);
+      await prepareMessages(foundOldest: true, messages: [message(100)]);
+
+      await store.handleEvent(eg.updateMessageEditEvent(model.messages.single,
+        renderedContent: '<p>edited</p>'));
+      checkNotifiedOnce();
+      check(model.matchContentByMessageId).isEmpty();
+      checkContent(model.contents.single, '<p>edited</p>');
+    });
+  });
+
   group('findItemWithMessageId', () {
     test('has MessageListDateSeparatorItem with null message ID', () => awaitFakeAsync((async) async {
       final stream = eg.stream();
@@ -4230,8 +4294,12 @@ void checkInvariants(MessageListView model) {
       check(model).contents[i].isA<PollContent>().poll.identicalTo(poll);
       continue;
     }
+    // In a search narrow, the content shown is the server's
+    // search-highlighted version; see [MessageListView.matchContentByMessageId].
+    final message = model.messages[i];
     check(model.contents[i]).isA<ZulipContent>()
-      .equalsNode(parseContent(model.messages[i].content));
+      .equalsNode(parseContent(
+        model.matchContentByMessageId[message.id] ?? message.content));
   }
 
   int i = 0;

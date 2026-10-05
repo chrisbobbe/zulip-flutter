@@ -118,6 +118,12 @@ mixin _MessageSequence {
   @visibleForTesting
   bool get oneMessagePerBlock;
 
+  /// Whether the narrow includes a keyword search.
+  ///
+  /// If false, messages won't be expected to have
+  /// [Message.matchContent] or [Message.matchTopic].
+  bool get hasKeywordSearchFilter;
+
   /// A sequence number for invalidating stale fetches.
   int generation = 0;
 
@@ -288,10 +294,38 @@ mixin _MessageSequence {
     }
   }
 
+  /// The server's search-highlighted version of each message's content,
+  /// for messages where we have it.
+  ///
+  /// See [Message.matchContent].
+  @visibleForTesting
+  Map<int, String> get matchContentByMessageId => _matchContentByMessageId;
+  final Map<int, String> _matchContentByMessageId = {};
+
+  /// Record the match fields of just-fetched messages, for use in this view.
+  ///
+  /// Call this before [MessageStore.reconcileMessages],
+  /// which strips those fields.
+  void _captureMatchContentAndTopic(List<Message> messages) {
+    if (!hasKeywordSearchFilter) return;
+
+    for (final message in messages) {
+      final matchContent = message.matchContent;
+      if (matchContent != null) {
+        _matchContentByMessageId[message.id] = matchContent;
+      }
+      // TODO(#1693) capture message.matchTopic too
+    }
+  }
+
+  ZulipMessageContent _parseMessageContent(Message message) =>
+    parseMessageContent(message,
+      matchContent: _matchContentByMessageId[message.id]);
+
   /// Update data derived from the content of the index-th message.
   void _reparseContent(int index) {
     final message = messages[index];
-    final content = parseMessageContent(message);
+    final content = _parseMessageContent(message);
     contents[index] = content;
 
     final itemIndex = findItemWithMessageId(message.id);
@@ -308,7 +342,7 @@ mixin _MessageSequence {
   void _addMessage(Message message) {
     assert(contents.length == messages.length);
     messages.add(message);
-    contents.add(parseMessageContent(message));
+    contents.add(_parseMessageContent(message));
     assert(contents.length == messages.length);
     _processMessage(messages.length - 1);
   }
@@ -322,7 +356,7 @@ mixin _MessageSequence {
   void _replaceMessage(int index, Message message) {
     assert(messages[index].id == message.id);
     messages[index] = message;
-    contents[index] = parseMessageContent(message);
+    contents[index] = _parseMessageContent(message);
   }
 
   /// Removes all messages from the list that satisfy [test].
@@ -399,7 +433,7 @@ mixin _MessageSequence {
     assert(contents.length == messages.length);
     messages.insertAll(index, toInsert);
     contents.insertAll(index, toInsert.map(
-      (message) => parseMessageContent(message)));
+      (message) => _parseMessageContent(message)));
     assert(contents.length == messages.length);
     if (index <= middleMessage) {
       middleMessage += messages.length - oldLength;
@@ -489,13 +523,14 @@ mixin _MessageSequence {
     contents.clear();
     items.clear();
     middleItem = 0;
+    _matchContentByMessageId.clear();
   }
 
   /// Redo all computations from scratch, based on [messages].
   void _recompute() {
     assert(contents.length == messages.length);
     contents.clear();
-    contents.addAll(messages.map((message) => parseMessageContent(message)));
+    contents.addAll(messages.map((message) => _parseMessageContent(message)));
     assert(contents.length == messages.length);
     _reprocessAll();
   }
@@ -745,6 +780,16 @@ class MessageListView with ChangeNotifier, _MessageSequence {
       || KeywordSearchNarrow() => true,
   };
 
+  @override bool get hasKeywordSearchFilter => switch (narrow) {
+    CombinedFeedNarrow()
+      || ChannelNarrow()
+      || TopicNarrow()
+      || DmNarrow()
+      || MentionsNarrow()
+      || StarredMessagesNarrow() => false,
+    KeywordSearchNarrow() => true,
+  };
+
   /// Whether [message] should actually appear in this message list,
   /// given that it does belong to the narrow.
   ///
@@ -933,6 +978,8 @@ class MessageListView with ChangeNotifier, _MessageSequence {
 
     _adjustNarrowForTopicPermalink(result.messages.firstOrNull);
 
+    _captureMatchContentAndTopic(result.messages);
+
     store.reconcileMessages(result.messages);
     store.recentSenders.handleMessages(result.messages); // TODO(#824)
 
@@ -1015,6 +1062,9 @@ class MessageListView with ChangeNotifier, _MessageSequence {
         if (result.messages.isNotEmpty) {
           _oldestFetchedMessageId = result.messages.first.id;
         }
+
+        _captureMatchContentAndTopic(result.messages);
+
         store.reconcileMessages(result.messages);
         store.recentSenders.handleMessages(result.messages); // TODO(#824)
 
@@ -1049,6 +1099,9 @@ class MessageListView with ChangeNotifier, _MessageSequence {
         if (result.messages.isNotEmpty) {
           _newestFetchedMessageId = result.messages.last.id;
         }
+
+        _captureMatchContentAndTopic(result.messages);
+
         store.reconcileMessages(result.messages);
         store.recentSenders.handleMessages(result.messages); // TODO(#824)
 
@@ -1374,6 +1427,7 @@ class MessageListView with ChangeNotifier, _MessageSequence {
   void messageContentChanged(int messageId) {
     final index = _findMessageWithId(messageId);
     if (index != -1) {
+      _matchContentByMessageId.remove(messageId);
       _reparseContent(index);
     }
   }
