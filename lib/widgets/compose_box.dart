@@ -1113,7 +1113,7 @@ Future<Iterable<FileToUpload>> _getFilePickerFiles(BuildContext context, FileTyp
   FilePickerResult? result;
   try {
     result = await ZulipBinding.instance
-      .pickFiles(allowMultiple: true, withReadStream: true, type: type);
+      .pickFiles(allowMultiple: true, type: type);
   } catch (e) {
     if (!context.mounted) return [];
     final zulipLocalizations = ZulipLocalizations.of(context);
@@ -1142,25 +1142,8 @@ Future<Iterable<FileToUpload>> _getFilePickerFiles(BuildContext context, FileTyp
     return []; // User cancelled; do nothing
   }
 
-  return result.files.map((f) {
-    assert(f.readStream != null);  // We passed `withReadStream: true` to pickFiles.
-    final mimeType = lookupMimeType(
-      // Seems like the path shouldn't be required; we still want to look for
-      // matches on `headerBytes`. Thankfully we can still do that, by calling
-      // lookupMimeType with the empty string as the path. That's a value that
-      // doesn't map to any particular type, so the path will be effectively
-      // ignored, as desired. Upstream comment:
-      //   https://github.com/dart-lang/mime/issues/11#issuecomment-2246824452
-      f.path ?? '',
-      headerBytes: f.bytes?.take(defaultMagicNumbersMaxLength).toList(),
-    );
-    return FileToUpload(
-      content: f.readStream!,
-      length: f.size,
-      filename: f.name,
-      mimeType: mimeType,
-    );
-  });
+  return (await Future.wait(
+    result.files.map((f) => _fileFromXFile(f.xFile)))).nonNulls;
 }
 
 class _AttachFileButton extends _AttachUploadsButton {
