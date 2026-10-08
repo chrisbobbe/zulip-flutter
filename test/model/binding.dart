@@ -428,10 +428,10 @@ class TestZulipBinding extends ZulipBinding {
   /// The value that `ZulipBinding.instance.pickFiles()` should return.
   ///
   /// See also [takePickFilesCalls].
-  FilePickerResult? pickFilesResult;
+  List<PlatformFile> pickFilesResult = [];
 
   void _resetPickFiles() {
-    pickFilesResult = null;
+    pickFilesResult = [];
     _pickFilesCalls = null;
   }
 
@@ -442,28 +442,16 @@ class TestZulipBinding extends ZulipBinding {
   /// either this method or [reset].
   ///
   /// See also [pickFilesResult].
-  List<({
-    bool? allowMultiple,
-    bool? withReadStream,
-    FileType? type,
-  })> takePickFilesCalls() {
+  List<({FileType? type})> takePickFilesCalls() {
     final result = _pickFilesCalls;
     _pickFilesCalls = null;
     return result ?? [];
   }
-  List<({
-    bool? allowMultiple,
-    bool? withReadStream,
-    FileType? type,
-  })>? _pickFilesCalls;
+  List<({FileType? type})>? _pickFilesCalls;
 
   @override
-  Future<FilePickerResult?> pickFiles({
-    bool? allowMultiple,
-    bool? withReadStream,
-    FileType? type,
-  }) async {
-    (_pickFilesCalls ??= []).add((allowMultiple: allowMultiple, withReadStream: withReadStream, type: type));
+  Future<List<PlatformFile>> pickFiles({FileType? type}) async {
+    (_pickFilesCalls ??= []).add((type: type));
     return pickFilesResult;
   }
 
