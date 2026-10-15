@@ -26,6 +26,7 @@ class PushDeviceManager extends PerAccountStoreBase {
 
   void _init() async {
     await _maybeRotatePushKeys();
+    if (_disposed) return;
     _registerTokenAndSubscribe();
   }
 
@@ -119,6 +120,7 @@ class PushDeviceManager extends PerAccountStoreBase {
     _debugMaybePause();
     if (_debugRegisterTokenProceed != null) {
       await _debugRegisterTokenProceed!.future;
+      if (_disposed) return;
     }
 
     if (account.deviceId == null
@@ -131,6 +133,7 @@ class PushDeviceManager extends PerAccountStoreBase {
       if (_disposed) return;
       await updateAccount(AccountsCompanion(
         deviceId: drift.Value(result.deviceId)));
+      if (_disposed) return;
       assert(account.deviceId != null);
     }
 
@@ -262,6 +265,8 @@ class PushDeviceManager extends PerAccountStoreBase {
       return;
     }
 
+    if (_disposed) return;
+
     try {
       await registerPushDevice(connection,
         deviceId: account.deviceId!, key: keyArgs, token: tokenArgs);
@@ -295,6 +300,7 @@ class PushDeviceManager extends PerAccountStoreBase {
 
     await updateAccount(AccountsCompanion(
       possibleLegacyPushToken: drift.Value(true)));
+    if (_disposed) return;
 
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -302,6 +308,7 @@ class PushDeviceManager extends PerAccountStoreBase {
 
       case TargetPlatform.iOS:
         final packageInfo = await ZulipBinding.instance.packageInfo;
+        if (_disposed) return;
         await addApnsToken(connection,
           token: token,
           appid: packageInfo!.packageName);

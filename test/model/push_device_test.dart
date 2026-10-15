@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:checks/checks.dart';
@@ -409,6 +410,24 @@ void main() {
         connection.prepare(json: {});
         await model.debugUnpauseRegisterToken();
         checkLastRequestApns(token: '012abc', appid: 'com.example.test');
+      }));
+
+      test('no requests after store disposed', () => awaitFakeAsync((async) async {
+        testBinding.firebaseMessagingInitialToken = '012abc';
+        await NotificationService.instance.start();
+
+        await prepareStoreLegacy();
+        store.dispose();
+        check(connection.isOpen).isFalse();
+
+        // (Not awaited: having returned early, registration never completes.)
+        unawaited(model.debugUnpauseRegisterToken());
+        async.flushMicrotasks();
+        check(connection.takeRequests()).isEmpty();
+
+        testBinding.firebaseMessaging.setToken('456def');
+        async.flushMicrotasks();
+        check(connection.takeRequests()).isEmpty();
       }));
 
       test('set possibleLegacyPushToken', () => awaitFakeAsync((async) async {
