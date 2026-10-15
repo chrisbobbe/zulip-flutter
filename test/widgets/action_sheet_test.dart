@@ -1669,6 +1669,138 @@ void main() {
         check(findButtonForLabel('Mark conversation as read')).findsNothing();
       });
     });
+
+    group('MuteUnmuteUserButton', () {
+      final narrow = DmNarrow.withUser(selfUserId: eg.selfUser.userId,
+        eg.otherUser.userId);
+
+      Future<void> prepareAndShow(WidgetTester tester, {required bool isMuted}) async {
+        await prepare(usersExcludingSelf: [eg.otherUser]);
+        if (isMuted) await store.setMutedUsers([eg.otherUser.userId]);
+        await showFromAppBar(tester, narrow: narrow,
+          textInAppBarTitle: isMuted ? 'Muted user' : eg.otherUser.fullName);
+        connection.takeRequests();
+      }
+
+      Future<void> tapButton(WidgetTester tester, String label) async {
+        await tester.tap(findButtonForLabel(label));
+        await tester.pump(); // [MenuItemButton.onPressed] called in a post-frame callback: flutter/flutter@e4a39fa2e
+      }
+
+      testWidgets('1:1 DM, user not muted', (tester) async {
+        await prepareAndShow(tester, isMuted: false);
+        checkButton('Mute user');
+        check(findButtonForLabel('Unmute user')).findsNothing();
+      });
+
+      testWidgets('1:1 DM, user muted', (tester) async {
+        await prepareAndShow(tester, isMuted: true);
+        checkButton('Unmute user');
+        check(findButtonForLabel('Mute user')).findsNothing();
+      });
+
+      testWidgets('above other buttons', (tester) async {
+        await prepareAndShow(tester, isMuted: false);
+        check(tester.getTopLeft(findButtonForLabel('Mute user')).dy)
+          .isLessThan(tester.getTopLeft(findButtonForLabel('View profile')).dy);
+      });
+
+      testWidgets('self-DM: no button', (tester) async {
+        final unreadMessage = eg.dmMessage(from: eg.selfUser, to: []);
+        await prepare(unreadMessages: [unreadMessage]);
+        await showFromInbox(tester,
+          narrow: DmNarrow.withUser(selfUserId: eg.selfUser.userId,
+            eg.selfUser.userId),
+          textInDmItem: eg.selfUser.fullName);
+        check(findButtonForLabel('Mute user')).findsNothing();
+        check(findButtonForLabel('Unmute user')).findsNothing();
+      });
+
+      testWidgets('group DM: no button', (tester) async {
+        final unreadMessage = eg.dmMessage(
+          from: eg.thirdUser, to: [eg.selfUser, eg.otherUser]);
+        await prepare(
+          usersExcludingSelf: [eg.otherUser, eg.thirdUser],
+          unreadMessages: [unreadMessage]);
+        await showFromInbox(tester,
+          narrow: DmNarrow.withUsers(selfUserId: eg.selfUser.userId,
+            [eg.otherUser.userId, eg.thirdUser.userId]),
+          textInDmItem: eg.thirdUser.fullName);
+        check(findButtonForLabel('Mute user')).findsNothing();
+        check(findButtonForLabel('Unmute user')).findsNothing();
+      });
+
+      testWidgets('mute: confirm', (tester) async {
+        await prepareAndShow(tester, isMuted: false);
+        await tapButton(tester, 'Mute user');
+        await tester.pump();
+        final (muteButton, _) = checkSuggestedActionDialog(tester,
+          expectedTitle: 'Mute ${eg.otherUser.fullName}?',
+          expectedMessage: 'Messages sent by muted users will never trigger notifications, '
+            'will be marked as read, and will be hidden.',
+          expectedActionButtonText: 'Mute');
+        check(connection.takeRequests()).isEmpty();
+
+        connection.prepare(json: {});
+        await tester.tap(find.byWidget(muteButton));
+        await tester.pump(Duration.zero);
+        check(connection.takeRequests()).single.isA<http.Request>()
+          ..method.equals('POST')
+          ..url.path.equals('/api/v1/users/me/muted_users/${eg.otherUser.userId}');
+        await transitionDurationObserver.pumpPastTransition(tester);
+        checkNoDialog(tester);
+      });
+
+      testWidgets('mute: cancel', (tester) async {
+        await prepareAndShow(tester, isMuted: false);
+        await tapButton(tester, 'Mute user');
+        await tester.pump();
+        final (_, cancelButton) = checkSuggestedActionDialog(tester,
+          expectedTitle: 'Mute ${eg.otherUser.fullName}?',
+          expectedActionButtonText: 'Mute');
+
+        await tester.tap(find.byWidget(cancelButton));
+        await tester.pump(Duration.zero);
+        check(connection.takeRequests()).isEmpty();
+      });
+
+      testWidgets('mute: request fails', (tester) async {
+        await prepareAndShow(tester, isMuted: false);
+        await tapButton(tester, 'Mute user');
+        await tester.pump();
+        final (muteButton, _) = checkSuggestedActionDialog(tester,
+          expectedTitle: 'Mute ${eg.otherUser.fullName}?',
+          expectedActionButtonText: 'Mute');
+
+        connection.prepare(apiException: eg.apiBadRequest(message: 'User already muted'));
+        await tester.tap(find.byWidget(muteButton));
+        await tester.pump(Duration.zero);
+        checkErrorDialog(tester,
+          expectedTitle: 'Failed to mute user',
+          expectedMessage: 'User already muted');
+      });
+
+      testWidgets('unmute: no confirmation', (tester) async {
+        await prepareAndShow(tester, isMuted: true);
+        connection.prepare(json: {});
+        await tapButton(tester, 'Unmute user');
+        await tester.pump(Duration.zero);
+        checkNoDialog(tester);
+        check(connection.takeRequests()).single.isA<http.Request>()
+          ..method.equals('DELETE')
+          ..url.path.equals('/api/v1/users/me/muted_users/${eg.otherUser.userId}');
+      });
+
+      testWidgets('unmute: request fails', (tester) async {
+        await prepareAndShow(tester, isMuted: true);
+        connection.prepare(apiException: eg.apiBadRequest(message: 'User is not muted'));
+        await tapButton(tester, 'Unmute user');
+        await tester.pump(Duration.zero);
+        checkErrorDialog(tester,
+          expectedTitle: 'Failed to unmute user',
+          expectedMessage: 'User is not muted');
+      });
+    });
   });
 
   group('message action sheet', () {

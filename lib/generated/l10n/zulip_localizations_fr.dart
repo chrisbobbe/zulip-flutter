@@ -355,6 +355,30 @@ class ZulipLocalizationsFr extends ZulipLocalizations {
       'Marquer la conversation comme lue';
 
   @override
+  String get actionSheetOptionMuteUser => 'Mute user';
+
+  @override
+  String get actionSheetOptionUnmuteUser => 'Unmute user';
+
+  @override
+  String muteUserConfirmationDialogTitle(String userName) {
+    return 'Mute $userName?';
+  }
+
+  @override
+  String get muteUserConfirmationDialogMessage =>
+      'Messages sent by muted users will never trigger notifications, will be marked as read, and will be hidden.';
+
+  @override
+  String get muteUserConfirmationDialogConfirmButton => 'Mute';
+
+  @override
+  String get errorMuteUserFailed => 'Failed to mute user';
+
+  @override
+  String get errorUnmuteUserFailed => 'Failed to unmute user';
+
+  @override
   String get errorWebAuthOperationalErrorTitle => 'Une erreur s\'est produite';
 
   @override

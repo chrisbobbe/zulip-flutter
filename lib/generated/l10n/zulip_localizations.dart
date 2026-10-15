@@ -736,6 +736,48 @@ abstract class ZulipLocalizations {
   /// **'Mark conversation as read'**
   String get actionSheetOptionMarkDmConversationAsRead;
 
+  /// Option to mute the other user in the action sheet for a 1:1 DM conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute user'**
+  String get actionSheetOptionMuteUser;
+
+  /// Option to unmute the other user in the action sheet for a 1:1 DM conversation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute user'**
+  String get actionSheetOptionUnmuteUser;
+
+  /// Title for a confirmation dialog for muting a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute {userName}?'**
+  String muteUserConfirmationDialogTitle(String userName);
+
+  /// Message for a confirmation dialog for muting a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages sent by muted users will never trigger notifications, will be marked as read, and will be hidden.'**
+  String get muteUserConfirmationDialogMessage;
+
+  /// Label for the 'Mute' button on a confirmation dialog for muting a user.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get muteUserConfirmationDialogConfirmButton;
+
+  /// Error title when muting a user fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to mute user'**
+  String get errorMuteUserFailed;
+
+  /// Error title when unmuting a user fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to unmute user'**
+  String get errorUnmuteUserFailed;
+
   /// Error title when third-party authentication has an operational error (not necessarily caused by invalid credentials).
   ///
   /// In en, this message translates to:

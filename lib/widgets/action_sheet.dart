@@ -1129,6 +1129,15 @@ void showDmActionSheet(BuildContext context, {required DmNarrow narrow}) {
   final buttonSections = [
     // TODO(#1534) Button to show list of participants as a separate page?
 
+    // TODO(#2383) Move MarkDmConversationAsReadButton into this section,
+    //   and ViewProfileButton below it.
+    if (otherRecipientIds.length == 1)
+      [
+        MuteUnmuteUserButton(pageContext: pageContext,
+          userId: otherRecipientIds.single,
+          isMuted: store.isUserMuted(otherRecipientIds.single)),
+      ],
+
     [
       if (otherRecipientIds.isEmpty)
         ViewProfileButton(pageContext: pageContext,
@@ -1140,8 +1149,6 @@ void showDmActionSheet(BuildContext context, {required DmNarrow narrow}) {
       if (unreadCount > 0)
         MarkDmConversationAsReadButton(pageContext: pageContext, narrow: narrow),
     ],
-
-    // TODO(#2113) Mute/unmute button
   ];
 
   final header = BottomSheetHeader(
@@ -1212,6 +1219,35 @@ class MarkDmConversationAsReadButton extends ActionSheetMenuItemButton {
 
   @override void onPressed() async {
     await ZulipAction.markNarrowAsRead(pageContext, narrow);
+  }
+}
+
+class MuteUnmuteUserButton extends ActionSheetMenuItemButton {
+  const MuteUnmuteUserButton({
+    super.key,
+    required super.pageContext,
+    required this.userId,
+    required this.isMuted,
+  });
+
+  final int userId;
+  final bool isMuted;
+
+  @override IconData get icon => isMuted ? ZulipIcons.unmute : ZulipIcons.mute;
+
+  @override
+  String label(ZulipLocalizations zulipLocalizations) {
+    return isMuted
+      ? zulipLocalizations.actionSheetOptionUnmuteUser
+      : zulipLocalizations.actionSheetOptionMuteUser;
+  }
+
+  @override void onPressed() async {
+    if (isMuted) {
+      await ZulipAction.unmuteUser(pageContext, userId: userId);
+    } else {
+      await ZulipAction.muteUser(pageContext, userId: userId);
+    }
   }
 }
 

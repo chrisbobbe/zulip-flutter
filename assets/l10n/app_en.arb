@@ -404,6 +404,37 @@
   "@actionSheetOptionMarkDmConversationAsRead": {
     "description": "Option to mark a DM conversation as read in the action sheet."
   },
+  "actionSheetOptionMuteUser": "Mute user",
+  "@actionSheetOptionMuteUser": {
+    "description": "Option to mute the other user in the action sheet for a 1:1 DM conversation."
+  },
+  "actionSheetOptionUnmuteUser": "Unmute user",
+  "@actionSheetOptionUnmuteUser": {
+    "description": "Option to unmute the other user in the action sheet for a 1:1 DM conversation."
+  },
+  "muteUserConfirmationDialogTitle": "Mute {userName}?",
+  "@muteUserConfirmationDialogTitle": {
+    "description": "Title for a confirmation dialog for muting a user.",
+    "placeholders": {
+      "userName": {"type": "String", "example": "Alice Anderson"}
+    }
+  },
+  "muteUserConfirmationDialogMessage": "Messages sent by muted users will never trigger notifications, will be marked as read, and will be hidden.",
+  "@muteUserConfirmationDialogMessage": {
+    "description": "Message for a confirmation dialog for muting a user."
+  },
+  "muteUserConfirmationDialogConfirmButton": "Mute",
+  "@muteUserConfirmationDialogConfirmButton": {
+    "description": "Label for the 'Mute' button on a confirmation dialog for muting a user."
+  },
+  "errorMuteUserFailed": "Failed to mute user",
+  "@errorMuteUserFailed": {
+    "description": "Error title when muting a user fails."
+  },
+  "errorUnmuteUserFailed": "Failed to unmute user",
+  "@errorUnmuteUserFailed": {
+    "description": "Error title when unmuting a user fails."
+  },
   "errorWebAuthOperationalErrorTitle": "Something went wrong",
   "@errorWebAuthOperationalErrorTitle": {
     "description": "Error title when third-party authentication has an operational error (not necessarily caused by invalid credentials)."

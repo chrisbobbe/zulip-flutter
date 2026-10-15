@@ -9,6 +9,7 @@ import '../api/model/narrow.dart';
 import '../api/route/messages.dart';
 import '../api/route/messages.dart' as messages_api;
 import '../api/route/channels.dart' as channels_api;
+import '../api/route/users.dart' as users_api;
 import '../generated/l10n/zulip_localizations.dart';
 import '../model/binding.dart';
 import '../model/emoji.dart';
@@ -438,6 +439,70 @@ abstract final class ZulipAction {
 
       final title = ZulipLocalizations.of(context).unsubscribeFailedTitle;
       showErrorDialog(context: context, title: title, message: errorMessage);
+    }
+  }
+
+  /// Mute a user, after a confirmation dialog,
+  /// showing an error dialog on failure.
+  static Future<void> muteUser(BuildContext context, {
+    required int userId,
+  }) async {
+    final store = PerAccountStoreWidget.of(context);
+    final zulipLocalizations = ZulipLocalizations.of(context);
+
+    // Muting marks all the user's messages as read, which unmuting
+    // doesn't undo; so confirm first.
+    final dialog = showSuggestedActionDialog(context: context,
+      title: zulipLocalizations.muteUserConfirmationDialogTitle(
+        store.userDisplayName(userId, replaceIfMuted: false)),
+      message: zulipLocalizations.muteUserConfirmationDialogMessage,
+      actionButtonText: zulipLocalizations.muteUserConfirmationDialogConfirmButton);
+    if (await dialog.result != true) return;
+    if (!context.mounted) return;
+
+    try {
+      await users_api.muteUser(PerAccountStoreWidget.of(context).connection,
+        mutedUserId: userId);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      String? errorMessage;
+      switch (e) {
+        case ZulipApiException():
+          errorMessage = e.message;
+          // TODO(#741) specific messages for common errors, like network errors
+          //   (support with reusable code)
+        default:
+      }
+
+      showErrorDialog(context: context,
+        title: zulipLocalizations.errorMuteUserFailed, message: errorMessage);
+    }
+  }
+
+  /// Unmute a user, showing an error dialog on failure.
+  static Future<void> unmuteUser(BuildContext context, {
+    required int userId,
+  }) async {
+    final store = PerAccountStoreWidget.of(context);
+    final zulipLocalizations = ZulipLocalizations.of(context);
+
+    try {
+      await users_api.unmuteUser(store.connection, mutedUserId: userId);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      String? errorMessage;
+      switch (e) {
+        case ZulipApiException():
+          errorMessage = e.message;
+          // TODO(#741) specific messages for common errors, like network errors
+          //   (support with reusable code)
+        default:
+      }
+
+      showErrorDialog(context: context,
+        title: zulipLocalizations.errorUnmuteUserFailed, message: errorMessage);
     }
   }
 
