@@ -28,6 +28,28 @@ void main() {
     });
   });
 
+  test('smoke muteUser', () {
+    return FakeApiConnection.with_((connection) async {
+      connection.prepare(json: {});
+      await muteUser(connection, mutedUserId: 10);
+      check(connection.takeRequests()).single.isA<http.Request>()
+        ..method.equals('POST')
+        ..url.path.equals('/api/v1/users/me/muted_users/10')
+        ..bodyFields.deepEquals({});
+    });
+  });
+
+  test('smoke unmuteUser', () {
+    return FakeApiConnection.with_((connection) async {
+      connection.prepare(json: {});
+      await unmuteUser(connection, mutedUserId: 10);
+      check(connection.takeRequests()).single.isA<http.Request>()
+        ..method.equals('DELETE')
+        ..url.path.equals('/api/v1/users/me/muted_users/10')
+        ..bodyFields.deepEquals({});
+    });
+  });
+
   test('smoke updatePresence', () {
     return FakeApiConnection.with_((connection) async {
       final response = UpdatePresenceResult(

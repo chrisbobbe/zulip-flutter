@@ -21,6 +21,20 @@ Future<void> updateStatus(ApiConnection connection, {
   });
 }
 
+/// https://zulip.com/api/mute-user
+Future<void> muteUser(ApiConnection connection, {
+  required int mutedUserId,
+}) {
+  return connection.post('muteUser', (_) {}, 'users/me/muted_users/$mutedUserId', {});
+}
+
+/// https://zulip.com/api/unmute-user
+Future<void> unmuteUser(ApiConnection connection, {
+  required int mutedUserId,
+}) {
+  return connection.delete('unmuteUser', (_) {}, 'users/me/muted_users/$mutedUserId', {});
+}
+
 /// https://zulip.com/api/update-presence
 ///
 /// Passes true for `slim_presence` to avoid getting an ancient data format
