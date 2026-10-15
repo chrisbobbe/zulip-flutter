@@ -1397,6 +1397,61 @@ void main() {
           checkAppearsLoading(tester, false);
         }, variant: const TargetPlatformVariant({TargetPlatform.android}));
 
+        testWidgets('multiple files, store replaced between uploads', (tester) async {
+          await prepare(tester);
+
+          testBinding.pickMultipleMediaResult = [
+            XFile.fromData(
+              mimeType: 'image/jpeg',
+              utf8.encode('asdf'),
+              name: 'image.jpg',
+              length: 12345,
+              path: '/data/user/0/com.zulipmobile/cache/image.jpg'),
+            XFile.fromData(
+              mimeType: 'image/gif',
+              utf8.encode('asdf'),
+              name: 'test.gif',
+              length: 12345,
+              path: '/data/user/0/com.zulipmobile/cache/test.gif'),
+          ];
+          connection.prepare(delay: const Duration(seconds: 1), json:
+            UploadFileResult(url: '/user_uploads/1/4e/m2A3MSqFnWRLUf9SaPzQ0Up_/image.jpg').toJson());
+
+          await tester.tap(find.byIcon(ZulipIcons.image));
+          await tester.pump();
+          check(connection.takeRequests()).single.isA<http.MultipartRequest>();
+
+          final newConnection = (testBinding.globalStore
+              ..clearCachedApiConnections()
+              ..useCachedApiConnections = true)
+            .apiConnectionFromAccount(store.account) as FakeApiConnection;
+          newConnection
+            // for the message-list fetch
+            ..prepare(json: eg.newestGetMessagesResult(
+                foundOldest: true, messages: []).toJson())
+            // for the topic-autocomplete fetch
+            ..prepare(json: GetChannelTopicsResult(topics: []).toJson())
+            ..prepare(json: UploadFileResult(
+                url: '/user_uploads/1/4e/m2A3MSqFnWRLUf9SaPzQ0Up_/test.gif').toJson());
+          store.updateMachine!
+            ..debugPauseLoop()
+            ..poll()
+            ..debugPrepareLoopError(
+                eg.apiExceptionBadEventQueueId(queueId: store.queueId))
+            ..debugAdvanceLoop();
+          await tester.pump(); // load the new store, closing the old connection
+          await tester.pump(); // rebuild with the new store
+          check(connection.isOpen).isFalse();
+
+          await tester.pump(const Duration(seconds: 1));
+          checkNoDialog(tester);
+          check(connection.takeRequests()).isEmpty();
+          check(newConnection.lastRequest).isA<http.MultipartRequest>()
+            .files.single.filename.equals('test.gif');
+          check(controller!.content.text).equals(
+            'see image: [image.jpg](/user_uploads/1/4e/m2A3MSqFnWRLUf9SaPzQ0Up_/image.jpg)\n\n[test.gif](/user_uploads/1/4e/m2A3MSqFnWRLUf9SaPzQ0Up_/test.gif)\n\n');
+        }, variant: const TargetPlatformVariant({TargetPlatform.android}));
+
         testWidgets('unreadable file skipped with message; other file uploaded', (tester) async {
           await prepare(tester);
 

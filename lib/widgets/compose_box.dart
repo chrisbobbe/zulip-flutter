@@ -1001,6 +1001,7 @@ Future<void> _uploadFiles({
   required Iterable<FileToUpload> files,
 }) async {
   assert(context.mounted);
+  final globalStore = GlobalStoreWidget.of(context);
   final store = PerAccountStoreWidget.of(context);
   final zulipLocalizations = ZulipLocalizations.of(context);
 
@@ -1042,7 +1043,11 @@ Future<void> _uploadFiles({
     final FileToUpload(:content, :length, :filename, :mimeType) = file;
     String? url;
     try {
-      final result = await uploadFile(store.connection,
+      // The store may have been replaced since the previous upload,
+      // closing the old store's connection; so look up the current one.
+      final currentStore = globalStore.perAccountSync(store.accountId);
+      if (currentStore == null) continue; // The account was logged out.
+      final result = await uploadFile(currentStore.connection,
         content: content,
         length: length,
         filename: filename,
