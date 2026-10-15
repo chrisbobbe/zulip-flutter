@@ -223,6 +223,42 @@ void main() {
         check(await didPass).isTrue();
       });
 
+      testWidgets('store replaced between batches', (tester) async {
+        await prepare(tester);
+
+        connection.prepare(delay: const Duration(seconds: 1),
+          json: UpdateMessageFlagsForNarrowResult(
+            processedCount: 1000, updatedCount: 890,
+            firstProcessedId: 1, lastProcessedId: 1989,
+            foundOldest: true, foundNewest: false).toJson());
+        final didPass = invokeUpdateMessageFlagsStartingFromAnchor();
+        await tester.pump(Duration.zero);
+        check(connection.takeRequests()).single;
+
+        final newConnection = (testBinding.globalStore
+            ..clearCachedApiConnections()
+            ..useCachedApiConnections = true)
+          .apiConnectionFromAccount(eg.selfAccount) as FakeApiConnection;
+        newConnection.prepare(json: UpdateMessageFlagsForNarrowResult(
+          processedCount: 20, updatedCount: 10,
+          firstProcessedId: 2000, lastProcessedId: 2023,
+          foundOldest: false, foundNewest: true).toJson());
+        store.updateMachine!
+          ..debugPauseLoop()
+          ..poll()
+          ..debugPrepareLoopError(
+              eg.apiExceptionBadEventQueueId(queueId: store.queueId))
+          ..debugAdvanceLoop();
+        await tester.pump();
+        check(connection.isOpen).isFalse(); // the new store has replaced the old
+
+        await tester.pump(const Duration(seconds: 1));
+        check(connection.takeRequests()).isEmpty();
+        check(newConnection.lastRequest).isA<http.Request>()
+          .bodyFields['anchor'].equals('1989');
+        check(await didPass).isTrue();
+      });
+
       testWidgets('on invalid response', (tester) async {
         final zulipLocalizations = GlobalLocalizations.zulipLocalizations;
         await prepare(tester);

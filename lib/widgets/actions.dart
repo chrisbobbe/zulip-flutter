@@ -142,8 +142,8 @@ abstract final class ZulipAction {
     required String onFailedTitle,
   }) async {
     try {
-      final store = PerAccountStoreWidget.of(context);
-      final connection = store.connection;
+      final globalStore = GlobalStoreWidget.of(context);
+      final accountId = PerAccountStoreWidget.accountIdOf(context);
       final scaffoldMessenger = ScaffoldMessenger.of(context);
 
       // Compare web's `mark_all_as_read` in web/src/unread_ops.js
@@ -151,7 +151,14 @@ abstract final class ZulipAction {
       int responseCount = 0;
       int updatedCount = 0;
       while (true) {
-        final result = await updateMessageFlagsForNarrow(connection,
+        // The store may have been replaced since the previous batch,
+        // closing the old store's connection; so look up the current one.
+        final store = globalStore.perAccountSync(accountId);
+        if (store == null) { // The account was logged out.
+          scaffoldMessenger.clearSnackBars();
+          return false;
+        }
+        final result = await updateMessageFlagsForNarrow(store.connection,
           anchor: anchor,
           includeAnchor: includeAnchor,
           // There is an upper limit of 5000 messages per batch
