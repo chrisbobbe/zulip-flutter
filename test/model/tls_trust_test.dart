@@ -20,22 +20,40 @@ void main() {
       '$pem\nCertificate:\n    Data:\n        Version: 3 (0x2)\n');
   }
 
+  test('distrustedRootFingerprints are lowercase hex, as sha256 produces', () {
+    for (final fingerprint in distrustedRootFingerprints) {
+      check(fingerprint).matchesPattern(RegExp(r'^[0-9a-f]{64}$'));
+    }
+  });
+
   group('readTrustedRoots', () {
+    test('drop the distrusted roots', () {
+      addRoot('aaa.0', aaaCertificateServicesPem);
+      addRoot('emsign.0', emSignEccRootCaG3Pem);
+      addRoot('test.0', testRootCaPem);
+      check(readTrustedRoots(rootStore,
+          distrustedFingerprints: distrustedRootFingerprints))
+        .deepEquals([testRootCaPem]);
+    });
+
     test('skip files with no certificate', () {
       File('${rootStore.path}/junk').writeAsStringSync('not a certificate\n');
       addRoot('test.0', testRootCaPem);
-      check(readTrustedRoots(rootStore)).deepEquals([testRootCaPem]);
+      check(readTrustedRoots(rootStore, distrustedFingerprints: {}))
+        .deepEquals([testRootCaPem]);
     });
   });
 
   group('securityContextFromRootStore', () {
     test('null for an empty root store', () {
-      check(securityContextFromRootStore(rootStore)).isNull();
+      check(securityContextFromRootStore(rootStore, distrustedFingerprints: {}))
+        .isNull();
     });
 
     test('throw for a missing root store', () {
       final missing = Directory('${rootStore.path}/missing');
-      check(() => securityContextFromRootStore(missing)).throws<FileSystemException>();
+      check(() => securityContextFromRootStore(missing, distrustedFingerprints: {}))
+        .throws<FileSystemException>();
     });
   });
 
@@ -68,7 +86,8 @@ void main() {
 
     test('trust roots in the root store', () async {
       addRoot('test.0', testRootCaPem);
-      final overrides = AndroidRootStoreHttpOverrides(rootStoreDirectory: rootStore);
+      final overrides = AndroidRootStoreHttpOverrides(
+        rootStoreDirectory: rootStore, distrustedFingerprints: {});
       check(await get(overrides)).equals(HttpStatus.ok);
     });
 
@@ -77,6 +96,15 @@ void main() {
       final overrides = AndroidRootStoreHttpOverrides(rootStoreDirectory: missing);
       // Default trust doesn't include the test CA, so the handshake fails;
       // but creating the client works.
+      await check(get(overrides)).throws<HandshakeException>();
+    });
+
+    test('no trust for a distrusted root', () async {
+      addRoot('other.0', aaaCertificateServicesPem);
+      addRoot('test.0', testRootCaPem);
+      final overrides = AndroidRootStoreHttpOverrides(
+        rootStoreDirectory: rootStore,
+        distrustedFingerprints: {testRootCaFingerprint});
       await check(get(overrides)).throws<HandshakeException>();
     });
   });
@@ -97,6 +125,9 @@ SAAwRQIgE7E+TX/7F6tGN8XmDWgfmcbRLiNzYABQ3hhzRgMk1tQCIQDQHWf3QGzS
 tqs9Gj7QBDp4PreZmgdNgn7Uzf7DyzS6ww==
 -----END CERTIFICATE-----''';
 
+const testRootCaFingerprint =
+  '7594a92e9f7f868def893660e8f0bdd1ddba2ceaaa420e0a203b2834c322d327';
+
 const testLeafPem = '''-----BEGIN CERTIFICATE-----
 MIIBwjCCAWigAwIBAgIUIWSNGgkX4AcEHO3LjX841LFAjGQwCgYIKoZIzj0EAwIw
 FzEVMBMGA1UEAwwMVGVzdCBSb290IENBMCAXDTI2MTAyMjIyNDkyOFoYDzIxMjYw
@@ -115,3 +146,48 @@ MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQghY9yR1K5Ns4W+7yO
 91d6wjdHNvVZntY1OI4rR8NTxE+hRANCAAQSamYVLLctTl4e0Cod3F749nHVTk0t
 rDxT2Kj/h8mU78t9KVtbHvdKBBg3f6cLgswtqTn8TNaJ+b0/j8HfYbAP
 -----END PRIVATE KEY-----''';
+
+// Two of the distrusted roots, from
+// https://emudhra.we-have-a-problem.com/roots.json .
+
+const aaaCertificateServicesPem = '''-----BEGIN CERTIFICATE-----
+MIIEMjCCAxqgAwIBAgIBATANBgkqhkiG9w0BAQUFADB7MQswCQYDVQQGEwJHQjEb
+MBkGA1UECAwSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHDAdTYWxmb3JkMRow
+GAYDVQQKDBFDb21vZG8gQ0EgTGltaXRlZDEhMB8GA1UEAwwYQUFBIENlcnRpZmlj
+YXRlIFNlcnZpY2VzMB4XDTA0MDEwMTAwMDAwMFoXDTI4MTIzMTIzNTk1OVowezEL
+MAkGA1UEBhMCR0IxGzAZBgNVBAgMEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UE
+BwwHU2FsZm9yZDEaMBgGA1UECgwRQ29tb2RvIENBIExpbWl0ZWQxITAfBgNVBAMM
+GEFBQSBDZXJ0aWZpY2F0ZSBTZXJ2aWNlczCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBAL5AnfRu4ep2hxxNRUSOvkbIgwadwSr+GB+O5AL686tdUIoWMQua
+BtDFcCLNSS1UY8y2bmhGC1Pqy0wkwLxyTurxFa70VJoSCsN6sjNg4tqJVfMiWPPe
+3M/vg4aijJRPn2jymJBGhCfHdr/jzDUsi14HZGWCwEiwqJH5YZ92IFCokcdmtet4
+YgNW8IoaE+oxox6gmf049vYnMlhvB/VruPsUK6+3qszWY19zjNoFmag4qMsXeDZR
+rOme9Hg6jc8P2ULimAyrL58OAd7vn5lJ8S3frHRNG5i1R8XlKdH5kBjHYpy+g8cm
+ez6KJcfA3Z3mNWgQIJ2P2N7Sw4ScDV7oL8kCAwEAAaOBwDCBvTAdBgNVHQ4EFgQU
+oBEKIz6W8Qfs4q8p74Klf9AwpLQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQF
+MAMBAf8wewYDVR0fBHQwcjA4oDagNIYyaHR0cDovL2NybC5jb21vZG9jYS5jb20v
+QUFBQ2VydGlmaWNhdGVTZXJ2aWNlcy5jcmwwNqA0oDKGMGh0dHA6Ly9jcmwuY29t
+b2RvLm5ldC9BQUFDZXJ0aWZpY2F0ZVNlcnZpY2VzLmNybDANBgkqhkiG9w0BAQUF
+AAOCAQEACFb8AvCb6P+k+tZ7xkSAzk/ExfYAWMymtrwUSWgEdujm7l3sAg9g1o1Q
+GE8mTgHj5rCl7r+8dFRBv/38ErjHT1r0iWAFf2C3BUrz9vHCv8S5dIa2LX1rzNLz
+Rt0vxuBqw8M0Ayx9lt1awg6nCpnBBYurDC/zXDrPbDdVCYfeU0BsWO/8tqtlbgT2
+G9w84FoVxp7Z8VlIMCFlA2zs6SFz7JsDoeA3raAVGI/6ugLOpyypEBMs1OUIJqsi
+l2D4kF501KKaU73yqWjgom7C12yxow+ev+to51byrvLjKzg6CYG1a4XXvi3tPxq3
+smPi9WIsgtRqAEFQ8TmDn5XpNpaYbg==
+-----END CERTIFICATE-----''';
+
+const emSignEccRootCaG3Pem = '''-----BEGIN CERTIFICATE-----
+MIICTjCCAdOgAwIBAgIKPPYHqWhwDtqLhDAKBggqhkjOPQQDAzBrMQswCQYDVQQG
+EwJJTjETMBEGA1UECxMKZW1TaWduIFBLSTElMCMGA1UEChMcZU11ZGhyYSBUZWNo
+bm9sb2dpZXMgTGltaXRlZDEgMB4GA1UEAxMXZW1TaWduIEVDQyBSb290IENBIC0g
+RzMwHhcNMTgwMjE4MTgzMDAwWhcNNDMwMjE4MTgzMDAwWjBrMQswCQYDVQQGEwJJ
+TjETMBEGA1UECxMKZW1TaWduIFBLSTElMCMGA1UEChMcZU11ZGhyYSBUZWNobm9s
+b2dpZXMgTGltaXRlZDEgMB4GA1UEAxMXZW1TaWduIEVDQyBSb290IENBIC0gRzMw
+djAQBgcqhkjOPQIBBgUrgQQAIgNiAAQjpQy4LRL1KPOxst3iAhKAnjlfSU2fySU0
+WXTsuwYc58Byr+iuL+FBVIcUqEqy6HyC5ltqtdyzdc6LBtCGI79G1Y4PPwT01xyS
+fvalY8L1X44uT6EYGQIrMgqCZH0Wk9GjQjBAMB0GA1UdDgQWBBR8XQKEE9TMipuB
+zhccLikenEhjQjAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAKBggq
+hkjOPQQDAwNpADBmAjEAvvNhzwIQHWSVB7gYboiFBS+DCBeQyh+KTOgNG3qxrdWB
+CUfvO6wIBHxcmbHtRwfSAjEAnbpV/KlK6O3t5nYBQnvI+GDZjVGLVTv7jHvrZQnD
++JbNR6iC8hZVdyR+EhCVBCyj
+-----END CERTIFICATE-----''';
