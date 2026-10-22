@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show HttpOverrides, Platform;
 
 import 'package:connectivity_plus/connectivity_plus.dart' as connectivity_plus;
 import 'package:device_info_plus/device_info_plus.dart' as device_info_plus;
@@ -21,6 +22,7 @@ import '../host/ios_notifications.g.dart';
 import '../host/notifications.dart' as notif_pigeon;
 import '../log.dart';
 import 'store.dart';
+import 'tls_trust.dart';
 
 export 'package:connectivity_plus/connectivity_plus.dart' show ConnectivityResult;
 export 'package:file_picker/file_picker.dart' show DarwinOptions, FileType;
@@ -432,6 +434,10 @@ class NotificationPigeonApi {
 /// underlying plugin method.
 class LiveZulipBinding extends ZulipBinding {
   LiveZulipBinding() {
+    if (Platform.isAndroid) {
+      HttpOverrides.global = AndroidRootStoreHttpOverrides();
+    }
+
     _deviceInfo = _prefetchDeviceInfo();
     _packageInfo = _prefetchPackageInfo();
 
