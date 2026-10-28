@@ -13,7 +13,10 @@ this_dir=${BASH_SOURCE[0]%/*}
 cd "${this_dir}"
 
 # `npm install` is painfully verbose, so we dial that back.
-npm install --no-fund --no-audit \
-  | grep -v '^up to date in '
+# (Not with a pipeline: when grep filters out every line it exits
+# nonzero, and `set -o pipefail` would make that fail the script.)
+npm_output=$(npm install --no-fund --no-audit)
+grep -v '^up to date in ' <<<"${npm_output}" \
+  || [ $? -eq 1 ]
 
 node build-icon-font.js
