@@ -136,11 +136,17 @@ class _HomePageState extends State<HomePage> {
               identifier: HomePage.contentSemanticsIdentifier,
               container: true,
               explicitChildNodes: true,
-              child: Stack(
-                children: [
-                  for (final (tab, body) in pageBodies)
-                    Offstage(offstage: tab != _tab.value, child: body),
-                ]))),
+              // Opt out of iOS's scroll-to-top on status-bar tap.
+              // On iPadOS 26, tapping the back button on a page above this one
+              // can also send a status-bar tap, which arrives after the pop
+              // and would scroll these lists to the top:
+              //   https://chat.zulip.org/#narrow/channel/48-mobile/topic/scrolling.20issues.20on.20iPad/near/2545100
+              child: PrimaryScrollController.none(
+                child: Stack(
+                  children: [
+                    for (final (tab, body) in pageBodies)
+                      Offstage(offstage: tab != _tab.value, child: body),
+                  ])))),
         ]),
       bottomNavigationBar: _BottomNavBar(tabNotifier: _tab));
   }

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:checks/checks.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_checks/flutter_checks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
@@ -203,6 +204,38 @@ void main () {
         .initNarrow.equals(const CombinedFeedNarrow());
       await tester.pump(Duration.zero); // message-list fetch
     });
+  });
+
+  testWidgets('no scroll-to-top on iOS status-bar tap', variant: TargetPlatformVariant.only(TargetPlatform.iOS), (tester) async {
+    // On iPadOS 26, tapping a back button can also send a status-bar tap,
+    // which arrives after the pop; see comment in HomePage.build.
+
+    // Give the status bar some height, so [Scaffold] can hit-test it.
+    tester.view.padding = FakeViewPadding(top: 24 * tester.view.devicePixelRatio);
+    tester.view.viewPadding = FakeViewPadding(top: 24 * tester.view.devicePixelRatio);
+    addTearDown(tester.view.reset);
+    await prepare(tester);
+    for (int i = 0; i < 40; i++) {
+      final channel = eg.stream();
+      await store.addStream(channel);
+      await store.addSubscription(eg.subscription(channel));
+      await store.addMessage(eg.streamMessage(stream: channel));
+    }
+    await tester.pump();
+
+    final position = tester.state<ScrollableState>(find.descendant(
+      of: find.byType(InboxPageBody), matching: find.byType(Scrollable))).position;
+    position.jumpTo(500);
+    await tester.pump();
+
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.statusBar.name,
+      SystemChannels.statusBar.codec.encodeMethodCall(
+        const MethodCall('handleScrollToTop')),
+      (_) {});
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    check(position.pixels).equals(500);
   });
 
   group('menu', () {
